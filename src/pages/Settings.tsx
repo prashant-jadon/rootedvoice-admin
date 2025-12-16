@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Save, Bell, Shield, Mail, Globe, Database, Key, AlertCircle } from 'lucide-react';
+import { Save, Bell, Shield, Globe, Key } from 'lucide-react';
 
 interface SystemSettings {
   general: {

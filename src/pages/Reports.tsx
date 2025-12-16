@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Download, Calendar, TrendingUp, DollarSign, Users, BarChart3, PieChart, FileText } from 'lucide-react';
+import { Download, Calendar, TrendingUp, DollarSign, Users, BarChart3 } from 'lucide-react';
 
 interface ReportData {
   revenue: {

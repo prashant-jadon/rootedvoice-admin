@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, Calendar, Video, User, Clock, Filter, Download, MoreVertical, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Search, Calendar, Video, User, Clock, Filter, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface Session {
   _id: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, User, Mail, Phone, Calendar, CheckCircle, XCircle, Download, MoreVertical, UserCheck, UserX } from 'lucide-react';
+import { Search, User, Mail, Phone, Calendar, Download, UserCheck, UserX } from 'lucide-react';
 
 interface User {
   _id: string;

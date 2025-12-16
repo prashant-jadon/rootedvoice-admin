@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { messageAPI } from '../lib/api';
-import { MessageCircle, Send, User, UserCheck, UserCircle, Clock, Search } from 'lucide-react';
+import { MessageCircle, Send, User, UserCheck, UserCircle, Search } from 'lucide-react';
 import io, { Socket } from 'socket.io-client';
 
 interface Conversation {
