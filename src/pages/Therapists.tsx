@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, Mail, Phone, Calendar, DollarSign } from 'lucide-react';
+import { Search, UserCheck, Mail, Phone, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck } from 'lucide-react';
 
 interface Therapist {
   _id: string;
@@ -11,15 +11,31 @@ interface Therapist {
     phone?: string;
   };
   specialization?: string[];
+  specializations?: string[];
   hourlyRate?: number;
   experience?: number;
   createdAt?: string;
+  status?: 'pending' | 'inactive' | 'active' | 'paused';
+  credentials?: 'SLP' | 'SLPA';
+  isVerified?: boolean;
+  complianceDocuments?: {
+    stateLicense?: {
+      verified?: boolean;
+    };
+    liabilityInsurance?: {
+      verified?: boolean;
+    };
+  };
 }
 
 export default function Therapists() {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  const [statusReason, setStatusReason] = useState('');
 
   useEffect(() => {
     fetchTherapists();
@@ -39,6 +55,48 @@ export default function Therapists() {
     }
   };
 
+  const handleStatusChange = async (therapistId: string, newStatus: string) => {
+    try {
+      await adminAPI.updateTherapistStatus(therapistId, newStatus, statusReason);
+      await fetchTherapists();
+      setShowStatusModal(false);
+      setSelectedTherapist(null);
+      setStatusReason('');
+      alert('Therapist status updated successfully');
+    } catch (error: any) {
+      console.error('Failed to update status:', error);
+      alert(error.response?.data?.message || 'Failed to update therapist status');
+    }
+  };
+
+  const handleComplianceVerify = async (therapistId: string, documentType: string, verified: boolean, notes?: string) => {
+    try {
+      await adminAPI.verifyTherapistCompliance(therapistId, documentType, verified, notes);
+      await fetchTherapists();
+      setShowComplianceModal(false);
+      setSelectedTherapist(null);
+      alert('Compliance verification updated successfully');
+    } catch (error: any) {
+      console.error('Failed to verify compliance:', error);
+      alert(error.response?.data?.message || 'Failed to update compliance verification');
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'active':
+        return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Active</span>;
+      case 'pending':
+        return <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>;
+      case 'paused':
+        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full flex items-center gap-1"><Pause className="w-3 h-3" /> Paused</span>;
+      case 'inactive':
+        return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full flex items-center gap-1"><XCircle className="w-3 h-3" /> Inactive</span>;
+      default:
+        return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">Unknown</span>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -51,7 +109,7 @@ export default function Therapists() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Therapists</h1>
-        <p className="text-gray-600 mt-2">View all registered therapists</p>
+        <p className="text-gray-600 mt-2">View and manage all registered therapists</p>
       </div>
 
       <div className="bg-white rounded-lg shadow border border-gray-200">
@@ -76,19 +134,22 @@ export default function Therapists() {
                   Therapist
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Credentials
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Specialization
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Experience
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Rate
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Joined
+                  Compliance
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -109,22 +170,18 @@ export default function Therapists() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      {therapist.userId?.email || 'N/A'}
-                    </div>
-                    {therapist.userId?.phone && (
-                      <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        {therapist.userId.phone}
-                      </div>
-                    )}
+                    {getStatusBadge(therapist.status)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                      {therapist.credentials || 'N/A'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {therapist.specialization && therapist.specialization.length > 0 ? (
+                      {(therapist.specialization || therapist.specializations || []).length > 0 ? (
                         <>
-                          {therapist.specialization.slice(0, 2).map((spec, idx) => (
+                          {(therapist.specialization || therapist.specializations || []).slice(0, 2).map((spec: string, idx: number) => (
                             <span
                               key={idx}
                               className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded"
@@ -132,9 +189,9 @@ export default function Therapists() {
                               {spec}
                             </span>
                           ))}
-                          {therapist.specialization.length > 2 && (
+                          {(therapist.specialization || therapist.specializations || []).length > 2 && (
                             <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-                              +{therapist.specialization.length - 2}
+                              +{(therapist.specialization || therapist.specializations || []).length - 2}
                             </span>
                           )}
                         </>
@@ -143,19 +200,56 @@ export default function Therapists() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {therapist.experience || 0} years
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
                       <DollarSign className="w-4 h-4" />
                       ${therapist.hourlyRate || 0}/hr
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {therapist.createdAt ? new Date(therapist.createdAt).toLocaleDateString() : 'N/A'}
+                      {therapist.complianceDocuments?.stateLicense?.verified && therapist.complianceDocuments?.liabilityInsurance?.verified ? (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <CheckCircle className="w-4 h-4" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="text-yellow-600 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          Pending
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedTherapist(therapist);
+                          setShowStatusModal(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                      >
+                        {therapist.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        Status
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedTherapist(therapist);
+                          setShowComplianceModal(true);
+                        }}
+                        className="text-green-600 hover:text-green-900 flex items-center gap-1"
+                      >
+                        <FileCheck className="w-4 h-4" />
+                        Verify
+                      </button>
+                      <a
+                        href={`/therapists/earnings?therapistId=${therapist._id}`}
+                        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Earnings
+                      </a>
                     </div>
                   </td>
                 </tr>
@@ -164,7 +258,129 @@ export default function Therapists() {
           </table>
         </div>
       </div>
+
+      {/* Status Modal */}
+      {showStatusModal && selectedTherapist && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Update Therapist Status</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Current status: <strong>{selectedTherapist.status}</strong>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                defaultValue={selectedTherapist.status}
+                onChange={(e) => {
+                  const newStatus = e.target.value;
+                  if (newStatus === 'paused' || newStatus === 'inactive') {
+                    // Show reason input
+                  }
+                }}
+              >
+                <option value="pending">Pending</option>
+                <option value="inactive">Inactive</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason (optional)</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                rows={3}
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                placeholder="Enter reason for status change..."
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowStatusModal(false);
+                  setSelectedTherapist(null);
+                  setStatusReason('');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const select = document.querySelector('select') as HTMLSelectElement;
+                  handleStatusChange(selectedTherapist._id, select.value);
+                }}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Update Status
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compliance Modal */}
+      {showComplianceModal && selectedTherapist && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Verify Compliance Documents</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">State License</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', true)}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', false)}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                  {selectedTherapist.complianceDocuments?.stateLicense?.verified && (
+                    <span className="text-green-600 text-sm">✓ Verified</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Liability Insurance</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', true)}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', false)}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                  {selectedTherapist.complianceDocuments?.liabilityInsurance?.verified && (
+                    <span className="text-green-600 text-sm">✓ Verified</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  setShowComplianceModal(false);
+                  setSelectedTherapist(null);
+                }}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

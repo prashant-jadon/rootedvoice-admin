@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Therapists from './pages/Therapists';
+import TherapistEarnings from './pages/TherapistEarnings';
 import Clients from './pages/Clients';
 import Payments from './pages/Payments';
 import Pricing from './pages/Pricing';
@@ -63,6 +64,26 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <Therapists />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/therapists/earnings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TherapistEarnings />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/therapists/:id/earnings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TherapistEarnings />
             </Layout>
           </ProtectedRoute>
         }

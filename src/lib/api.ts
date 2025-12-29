@@ -98,6 +98,22 @@ export const adminAPI = {
     api.put(`/admin/therapists/${therapistId}/credentials`, { credentials }),
   bulkUpdateCredentials: (therapistIds: string[], credentials: string) =>
     api.put('/admin/therapists/credentials/bulk', { therapistIds, credentials }),
+  
+  // Therapist Earnings
+  getTherapistEarnings: (therapistId: string, params?: any) =>
+    api.get(`/admin/therapists/${therapistId}/earnings`, { params }),
+  getAllTherapistsEarnings: (params?: any) =>
+    api.get('/admin/therapists/earnings', { params }),
+  
+  // Therapist Status & Compliance
+  updateTherapistStatus: (therapistId: string, status: string, reason?: string) =>
+    api.put(`/admin/therapists/${therapistId}/status`, { status, reason }),
+  verifyTherapistCompliance: (therapistId: string, documentType: string, verified: boolean, notes?: string, credentialId?: string) =>
+    api.put(`/admin/therapists/${therapistId}/verify-compliance`, { documentType, verified, notes, credentialId }),
+  getTherapistActivity: (therapistId: string, params?: any) =>
+    api.get(`/admin/therapists/${therapistId}/activity`, { params }),
+  getIncompleteTherapistProfiles: () =>
+    api.get('/admin/therapists/incomplete'),
 };
 
 // Message/Support API
