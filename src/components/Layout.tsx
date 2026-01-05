@@ -21,6 +21,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Therapists', href: '/therapists', icon: UserCheck },
+  { name: 'Therapist Earnings', href: '/therapists/earnings', icon: DollarSign },
   { name: 'Clients', href: '/clients', icon: UserCircle },
   { name: 'Sessions', href: '/sessions', icon: Calendar },
   { name: 'Payments', href: '/payments', icon: CreditCard },

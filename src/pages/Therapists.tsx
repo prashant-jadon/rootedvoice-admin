@@ -19,11 +19,53 @@ interface Therapist {
   credentials?: 'SLP' | 'SLPA';
   isVerified?: boolean;
   complianceDocuments?: {
+    spaMembership?: {
+      membershipNumber?: string;
+      membershipType?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+    };
+    stateRegistration?: {
+      registrationNumber?: string;
+      state?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+    };
+    professionalIndemnityInsurance?: {
+      provider?: string;
+      policyNumber?: string;
+      coverageAmount?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+    };
+    workingWithChildrenCheck?: {
+      checkNumber?: string;
+      state?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+    };
+    policeCheck?: {
+      checkNumber?: string;
+      issueDate?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+    };
     stateLicense?: {
       verified?: boolean;
+      number?: string;
+      state?: string;
+      documentUrl?: string;
     };
     liabilityInsurance?: {
       verified?: boolean;
+      provider?: string;
+      policyNumber?: string;
+      documentUrl?: string;
     };
   };
 }
@@ -323,57 +365,378 @@ export default function Therapists() {
       {/* Compliance Modal */}
       {showComplianceModal && selectedTherapist && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Verify Compliance Documents</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State License</label>
+            <p className="text-sm text-gray-600 mb-4">
+              Therapist: <strong>{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</strong>
+            </p>
+            
+            <div className="space-y-6">
+              {/* SPA Membership */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">SPA Membership</label>
+                  {selectedTherapist.complianceDocuments?.spaMembership?.verified ? (
+                    <span className="text-green-600 text-sm flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Pending
+                    </span>
+                  )}
+                </div>
+                {selectedTherapist.complianceDocuments?.spaMembership && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    {selectedTherapist.complianceDocuments.spaMembership.membershipNumber && (
+                      <div><span className="text-gray-600">Membership #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.spaMembership.membershipNumber}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.spaMembership.membershipType && (
+                      <div><span className="text-gray-600">Type:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.spaMembership.membershipType}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.spaMembership.expirationDate && (
+                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.spaMembership.expirationDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.spaMembership.documentUrl && (
+                      <div>
+                        <a href={selectedTherapist.complianceDocuments.spaMembership.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', true)}
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'spaMembership', true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                   >
-                    Verify
+                    ✓ Verify
                   </button>
                   <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', false)}
-                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'spaMembership', false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
                   >
-                    Reject
+                    ✗ Reject
                   </button>
-                  {selectedTherapist.complianceDocuments?.stateLicense?.verified && (
-                    <span className="text-green-600 text-sm">✓ Verified</span>
-                  )}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Liability Insurance</label>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', true)}
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    Verify
-                  </button>
-                  <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', false)}
-                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                  >
-                    Reject
-                  </button>
-                  {selectedTherapist.complianceDocuments?.liabilityInsurance?.verified && (
-                    <span className="text-green-600 text-sm">✓ Verified</span>
+
+              {/* State Registration */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">State Registration</label>
+                  {selectedTherapist.complianceDocuments?.stateRegistration?.verified ? (
+                    <span className="text-green-600 text-sm flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Pending
+                    </span>
                   )}
                 </div>
+                {selectedTherapist.complianceDocuments?.stateRegistration && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    {selectedTherapist.complianceDocuments.stateRegistration.registrationNumber && (
+                      <div><span className="text-gray-600">Registration #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateRegistration.registrationNumber}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.stateRegistration.state && (
+                      <div><span className="text-gray-600">State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateRegistration.state}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.stateRegistration.expirationDate && (
+                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.stateRegistration.expirationDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.stateRegistration.documentUrl && (
+                      <div>
+                        <a href={selectedTherapist.complianceDocuments.stateRegistration.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateRegistration', true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                  >
+                    ✓ Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateRegistration', false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                  >
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+
+              {/* Professional Indemnity Insurance */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Professional Indemnity Insurance</label>
+                  {selectedTherapist.complianceDocuments?.professionalIndemnityInsurance?.verified ? (
+                    <span className="text-green-600 text-sm flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Pending
+                    </span>
+                  )}
+                </div>
+                {selectedTherapist.complianceDocuments?.professionalIndemnityInsurance && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.provider && (
+                      <div><span className="text-gray-600">Provider:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.professionalIndemnityInsurance.provider}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.policyNumber && (
+                      <div><span className="text-gray-600">Policy #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.professionalIndemnityInsurance.policyNumber}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.coverageAmount && (
+                      <div><span className="text-gray-600">Coverage:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.professionalIndemnityInsurance.coverageAmount}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.expirationDate && (
+                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.professionalIndemnityInsurance.expirationDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.documentUrl && (
+                      <div>
+                        <a href={selectedTherapist.complianceDocuments.professionalIndemnityInsurance.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'professionalIndemnityInsurance', true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                  >
+                    ✓ Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'professionalIndemnityInsurance', false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                  >
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+
+              {/* Working with Children Check */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Working with Children Check</label>
+                  {selectedTherapist.complianceDocuments?.workingWithChildrenCheck?.verified ? (
+                    <span className="text-green-600 text-sm flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Pending
+                    </span>
+                  )}
+                </div>
+                {selectedTherapist.complianceDocuments?.workingWithChildrenCheck && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    {selectedTherapist.complianceDocuments.workingWithChildrenCheck.checkNumber && (
+                      <div><span className="text-gray-600">WWCC #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.workingWithChildrenCheck.checkNumber}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.workingWithChildrenCheck.state && (
+                      <div><span className="text-gray-600">State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.workingWithChildrenCheck.state}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.workingWithChildrenCheck.expirationDate && (
+                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.workingWithChildrenCheck.expirationDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.workingWithChildrenCheck.documentUrl && (
+                      <div>
+                        <a href={selectedTherapist.complianceDocuments.workingWithChildrenCheck.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'workingWithChildrenCheck', true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                  >
+                    ✓ Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'workingWithChildrenCheck', false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                  >
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+
+              {/* Police Check */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">National Police Check</label>
+                  {selectedTherapist.complianceDocuments?.policeCheck?.verified ? (
+                    <span className="text-green-600 text-sm flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  ) : (
+                    <span className="text-yellow-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> Pending
+                    </span>
+                  )}
+                </div>
+                {selectedTherapist.complianceDocuments?.policeCheck && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    {selectedTherapist.complianceDocuments.policeCheck.checkNumber && (
+                      <div><span className="text-gray-600">Check #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.policeCheck.checkNumber}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.policeCheck.issueDate && (
+                      <div><span className="text-gray-600">Issue Date:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.policeCheck.issueDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.policeCheck.expirationDate && (
+                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.policeCheck.expirationDate).toLocaleDateString()}</span></div>
+                    )}
+                    {selectedTherapist.complianceDocuments.policeCheck.documentUrl && (
+                      <div>
+                        <a href={selectedTherapist.complianceDocuments.policeCheck.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                          View Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'policeCheck', true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                  >
+                    ✓ Verify
+                  </button>
+                  <button
+                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'policeCheck', false)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                  >
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+
+              {/* Legacy Support - State License & Liability Insurance */}
+              {(selectedTherapist.complianceDocuments?.stateLicense || selectedTherapist.complianceDocuments?.liabilityInsurance) && (
+                <>
+                  {selectedTherapist.complianceDocuments?.stateLicense && (
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-medium text-gray-700">State License (Legacy)</label>
+                        {selectedTherapist.complianceDocuments.stateLicense.verified ? (
+                          <span className="text-green-600 text-sm flex items-center gap-1">
+                            <CheckCircle className="w-4 h-4" /> Verified
+                          </span>
+                        ) : (
+                          <span className="text-yellow-600 text-sm flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> Pending
+                          </span>
+                        )}
+                      </div>
+                      {selectedTherapist.complianceDocuments.stateLicense.number && (
+                        <div className="mb-3 space-y-1 text-sm">
+                          <div><span className="text-gray-600">License #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicense.number}</span></div>
+                          {selectedTherapist.complianceDocuments.stateLicense.state && (
+                            <div><span className="text-gray-600">State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicense.state}</span></div>
+                          )}
+                          {selectedTherapist.complianceDocuments.stateLicense.documentUrl && (
+                            <div>
+                              <a href={selectedTherapist.complianceDocuments.stateLicense.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                                View Document
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', true)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                        >
+                          ✓ Verify
+                        </button>
+                        <button
+                          onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicense', false)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                        >
+                          ✗ Reject
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTherapist.complianceDocuments?.liabilityInsurance && (
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-medium text-gray-700">Liability Insurance (Legacy)</label>
+                        {selectedTherapist.complianceDocuments.liabilityInsurance.verified ? (
+                          <span className="text-green-600 text-sm flex items-center gap-1">
+                            <CheckCircle className="w-4 h-4" /> Verified
+                          </span>
+                        ) : (
+                          <span className="text-yellow-600 text-sm flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" /> Pending
+                          </span>
+                        )}
+                      </div>
+                      {selectedTherapist.complianceDocuments.liabilityInsurance.provider && (
+                        <div className="mb-3 space-y-1 text-sm">
+                          <div><span className="text-gray-600">Provider:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.liabilityInsurance.provider}</span></div>
+                          {selectedTherapist.complianceDocuments.liabilityInsurance.policyNumber && (
+                            <div><span className="text-gray-600">Policy #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.liabilityInsurance.policyNumber}</span></div>
+                          )}
+                          {selectedTherapist.complianceDocuments.liabilityInsurance.documentUrl && (
+                            <div>
+                              <a href={selectedTherapist.complianceDocuments.liabilityInsurance.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                                View Document
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', true)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                        >
+                          ✓ Verify
+                        </button>
+                        <button
+                          onClick={() => handleComplianceVerify(selectedTherapist._id, 'liabilityInsurance', false)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                        >
+                          ✗ Reject
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Status Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Once both State License and Liability Insurance are verified, the therapist will be automatically activated if their status is currently "pending".
+                </p>
               </div>
             </div>
-            <div className="mt-4">
+
+            <div className="mt-6 flex gap-2">
               <button
                 onClick={() => {
                   setShowComplianceModal(false);
                   setSelectedTherapist(null);
                 }}
-                className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
               >
                 Close
               </button>

@@ -54,6 +54,22 @@ interface AllTherapistsEarnings {
         totalEarnings: number;
       };
     };
+    earningsRanges?: {
+      '0-1000': number;
+      '1000-5000': number;
+      '5000-10000': number;
+      '10000-25000': number;
+      '25000-50000': number;
+      '50000+': number;
+    };
+    hoursRanges?: {
+      '0-10': number;
+      '10-50': number;
+      '50-100': number;
+      '100-250': number;
+      '250-500': number;
+      '500+': number;
+    };
   };
   period: {
     startDate: string | null;
