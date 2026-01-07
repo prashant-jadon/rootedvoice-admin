@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, Mail, Phone, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck } from 'lucide-react';
+import { Search, UserCheck, Mail, Phone, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X } from 'lucide-react';
 
 interface Therapist {
   _id: string;
@@ -121,6 +121,33 @@ export default function Therapists() {
     } catch (error: any) {
       console.error('Failed to verify compliance:', error);
       alert(error.response?.data?.message || 'Failed to update compliance verification');
+    }
+  };
+
+  const handleQuickApprove = async (therapistId: string) => {
+    if (window.confirm('Are you sure you want to approve this therapist? This will set their status to active.')) {
+      try {
+        await adminAPI.updateTherapistStatus(therapistId, 'active', 'Approved by admin');
+        await fetchTherapists();
+        alert('Therapist approved successfully');
+      } catch (error: any) {
+        console.error('Failed to approve therapist:', error);
+        alert(error.response?.data?.message || 'Failed to approve therapist');
+      }
+    }
+  };
+
+  const handleQuickReject = async (therapistId: string) => {
+    const reason = window.prompt('Please provide a reason for rejection:');
+    if (reason !== null) {
+      try {
+        await adminAPI.updateTherapistStatus(therapistId, 'inactive', reason || 'Rejected by admin');
+        await fetchTherapists();
+        alert('Therapist rejected successfully');
+      } catch (error: any) {
+        console.error('Failed to reject therapist:', error);
+        alert(error.response?.data?.message || 'Failed to reject therapist');
+      }
     }
   };
 
@@ -264,13 +291,34 @@ export default function Therapists() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {therapist.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleQuickApprove(therapist._id)}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            title="Approve Therapist"
+                          >
+                            <Check className="w-4 h-4" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleQuickReject(therapist._id)}
+                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            title="Reject Therapist"
+                          >
+                            <X className="w-4 h-4" />
+                            Reject
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => {
                           setSelectedTherapist(therapist);
                           setShowStatusModal(true);
                         }}
-                        className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1"
+                        className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                        title="Change Status"
                       >
                         {therapist.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         Status
@@ -280,14 +328,16 @@ export default function Therapists() {
                           setSelectedTherapist(therapist);
                           setShowComplianceModal(true);
                         }}
-                        className="text-green-600 hover:text-green-900 flex items-center gap-1"
+                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                        title="Verify Compliance Documents"
                       >
                         <FileCheck className="w-4 h-4" />
-                        Verify
+                        Verify Docs
                       </button>
                       <a
                         href={`/therapists/earnings?therapistId=${therapist._id}`}
-                        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                        title="View Earnings"
                       >
                         <Eye className="w-4 h-4" />
                         Earnings
