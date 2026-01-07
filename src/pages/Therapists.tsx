@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X } from 'lucide-react';
+import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle } from 'lucide-react';
 
 interface Therapist {
   _id: string;
@@ -17,6 +17,7 @@ interface Therapist {
   createdAt?: string;
   status?: 'pending' | 'inactive' | 'active' | 'paused';
   credentials?: 'SLP' | 'SLPA';
+  canSupervise?: boolean;
   isVerified?: boolean;
   complianceDocuments?: {
     spaMembership?: {
@@ -151,6 +152,20 @@ export default function Therapists() {
     }
   };
 
+  const handleToggleSupervising = async (therapistId: string, currentStatus: boolean) => {
+    const action = currentStatus ? 'remove supervising status from' : 'designate as supervisor for';
+    if (window.confirm(`Are you sure you want to ${action} this therapist?`)) {
+      try {
+        await adminAPI.updateTherapistSupervising(therapistId, !currentStatus);
+        await fetchTherapists();
+        alert(`Therapist ${!currentStatus ? 'designated as supervisor' : 'removed from supervising role'} successfully`);
+      } catch (error: any) {
+        console.error('Failed to update supervising status:', error);
+        alert(error.response?.data?.message || 'Failed to update supervising status');
+      }
+    }
+  };
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'active':
@@ -242,9 +257,42 @@ export default function Therapists() {
                     {getStatusBadge(therapist.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                      {therapist.credentials || 'N/A'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {therapist.credentials === 'SLP' && therapist.canSupervise ? (
+                        <button
+                          onClick={() => handleToggleSupervising(therapist._id, true)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors cursor-pointer"
+                          title="⭐ Supervising SLP - Click to remove supervising status"
+                        >
+                          <Star className="w-3.5 h-3.5 fill-yellow-600 text-yellow-600" />
+                          Supervising SLP
+                        </button>
+                      ) : therapist.credentials === 'SLP' ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Licensed SLP
+                          </span>
+                          <button
+                            onClick={() => handleToggleSupervising(therapist._id, false)}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors cursor-pointer border border-dashed border-gray-300"
+                            title="Click to designate as supervising SLP"
+                          >
+                            <Star className="w-3 h-3" />
+                            Add
+                          </button>
+                        </div>
+                      ) : therapist.credentials === 'SLPA' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          <Puzzle className="w-3.5 h-3.5" />
+                          SLPA
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                          {therapist.credentials || 'N/A'}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">

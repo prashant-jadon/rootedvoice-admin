@@ -108,6 +108,8 @@ export const adminAPI = {
   // Therapist Status & Compliance
   updateTherapistStatus: (therapistId: string, status: string, reason?: string) =>
     api.put(`/admin/therapists/${therapistId}/status`, { status, reason }),
+  updateTherapistSupervising: (therapistId: string, canSupervise: boolean) =>
+    api.put(`/admin/therapists/${therapistId}/supervising`, { canSupervise }),
   verifyTherapistCompliance: (therapistId: string, documentType: string, verified: boolean, notes?: string, credentialId?: string) =>
     api.put(`/admin/therapists/${therapistId}/verify-compliance`, { documentType, verified, notes, credentialId }),
   getTherapistActivity: (therapistId: string, params?: any) =>
