@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, Mail, Phone, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X } from 'lucide-react';
+import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X } from 'lucide-react';
 
 interface Therapist {
   _id: string;
@@ -292,11 +292,11 @@ export default function Therapists() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {therapist.status === 'pending' && (
+                      {therapist.status === 'pending' ? (
                         <>
                           <button
                             onClick={() => handleQuickApprove(therapist._id)}
-                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm font-semibold transition-colors shadow-sm"
                             title="Approve Therapist"
                           >
                             <Check className="w-4 h-4" />
@@ -304,11 +304,30 @@ export default function Therapists() {
                           </button>
                           <button
                             onClick={() => handleQuickReject(therapist._id)}
-                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm font-semibold transition-colors shadow-sm"
                             title="Reject Therapist"
                           >
                             <X className="w-4 h-4" />
                             Reject
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleQuickApprove(therapist._id)}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            title="Activate Therapist"
+                          >
+                            <Check className="w-4 h-4" />
+                            Activate
+                          </button>
+                          <button
+                            onClick={() => handleQuickReject(therapist._id)}
+                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                            title="Deactivate Therapist"
+                          >
+                            <X className="w-4 h-4" />
+                            Deactivate
                           </button>
                         </>
                       )}
@@ -328,11 +347,11 @@ export default function Therapists() {
                           setSelectedTherapist(therapist);
                           setShowComplianceModal(true);
                         }}
-                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                        className="px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
                         title="Verify Compliance Documents"
                       >
                         <FileCheck className="w-4 h-4" />
-                        Verify Docs
+                        Verify
                       </button>
                       <a
                         href={`/therapists/earnings?therapistId=${therapist._id}`}

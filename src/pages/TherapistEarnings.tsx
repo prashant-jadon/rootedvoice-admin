@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { adminAPI } from '../lib/api';
-import { DollarSign, Clock, TrendingUp, Users, Calendar } from 'lucide-react';
+import { DollarSign, Clock, TrendingUp, Users } from 'lucide-react';
 
 interface EarningsData {
   therapist: {
