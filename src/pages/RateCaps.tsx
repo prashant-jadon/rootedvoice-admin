@@ -43,7 +43,7 @@ export default function RateCaps() {
         setSlpCancellationFee(data.cancellationFees.SLP || 20);
         setSlpaCancellationFee(data.cancellationFees.SLPA || 15);
       } else if (data.slpaCancellationFee) {
-        setSlpaCancellationFee(data.slpaCancellationFee);
+      setSlpaCancellationFee(data.slpaCancellationFee);
         setSlpCancellationFee(20); // Default for SLP
       }
     } catch (error) {
