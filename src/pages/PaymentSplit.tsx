@@ -17,13 +17,13 @@ interface PaymentSplit {
 
 export default function PaymentSplit() {
   const [split, setSplit] = useState<PaymentSplit>({
-    SLP: { platformFeePercent: 20, therapistFeePercent: 80 },
-    SLPA: { platformFeePercent: 20, therapistFeePercent: 80 },
+    SLP: { platformFeePercent: 45, therapistFeePercent: 55 },
+    SLPA: { platformFeePercent: 45, therapistFeePercent: 55 },
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [slpPlatformFee, setSlpPlatformFee] = useState(20);
-  const [slpaPlatformFee, setSlpaPlatformFee] = useState(20);
+  const [slpPlatformFee, setSlpPlatformFee] = useState(45);
+  const [slpaPlatformFee, setSlpaPlatformFee] = useState(45);
 
   useEffect(() => {
     fetchPaymentSplit();
