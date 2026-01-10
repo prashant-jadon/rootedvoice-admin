@@ -6,6 +6,7 @@ interface PricingTier {
   name: string;
   price: number;
   duration: number;
+  durationRange?: string;
   billingCycle: string;
   sessionsPerMonth: number;
   features: string[];
@@ -217,6 +218,17 @@ export default function Pricing() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Duration Range (e.g., 45-50)</label>
+                <input
+                  type="text"
+                  value={formData.durationRange || ''}
+                  onChange={(e) => setFormData({ ...formData, durationRange: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="45-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">Optional: Use for flexible duration ranges</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
                 <select
                   value={formData.billingCycle || 'monthly'}
@@ -423,6 +435,16 @@ export default function Pricing() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration Range</label>
+                    <input
+                      type="text"
+                      value={formData.durationRange || ''}
+                      onChange={(e) => setFormData({ ...formData, durationRange: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="45-50"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Billing Cycle</label>
                     <select
                       value={formData.billingCycle || ''}
@@ -528,7 +550,7 @@ export default function Pricing() {
                     {tierData.billingCycle === 'one-time' && `$${tierData.price} one-time`}
                     {tierData.billingCycle === 'every-4-weeks' && `$${tierData.price} (billed monthly)`}
                   </p>
-                  <p>Duration: {tierData.duration} minutes</p>
+                  <p>Duration: {tierData.durationRange ? `${tierData.durationRange} minutes` : `${tierData.duration} minutes`}</p>
                   <p>Billing: {tierData.billingCycle === 'every-4-weeks' ? 'Monthly (every 4 weeks)' : tierData.billingCycle}</p>
                   {tierData.sessionsPerMonth > 0 && (
                     <p>Sessions: {tierData.sessionsPerMonth}/month</p>
