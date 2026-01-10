@@ -10,6 +10,10 @@ interface PricingTier {
   sessionsPerMonth: number;
   features: string[];
   popular?: boolean;
+  description?: string;
+  icon?: string;
+  monthlyPrice?: number;
+  perSessionPrice?: number;
 }
 
 export default function Pricing() {
@@ -17,7 +21,10 @@ export default function Pricing() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [formData, setFormData] = useState<Partial<PricingTier & { tier: string }>>({});
+  const [formData, setFormData] = useState<Partial<PricingTier & { tier: string; newFeature: string }>>({
+    features: [],
+    newFeature: '',
+  });
 
   useEffect(() => {
     fetchPricing();
@@ -36,17 +43,21 @@ export default function Pricing() {
 
   const handleEdit = (tier: string) => {
     setEditing(tier);
-    setFormData(pricing[tier]);
+    setFormData({
+      ...pricing[tier],
+      newFeature: '',
+    });
   };
 
   const handleSave = async () => {
     if (!editing) return;
 
     try {
-      await adminAPI.updatePricing(editing, formData);
+      const { newFeature, tier, ...updateData } = formData;
+      await adminAPI.updatePricing(editing, updateData);
       await fetchPricing();
       setEditing(null);
-      setFormData({});
+      setFormData({ features: [], newFeature: '' });
     } catch (error) {
       console.error('Failed to update pricing:', error);
       alert('Failed to update pricing');
@@ -72,14 +83,33 @@ export default function Pricing() {
     }
 
     try {
-      await adminAPI.createPricing(formData);
+      const { newFeature, ...createData } = formData;
+      await adminAPI.createPricing(createData);
       await fetchPricing();
       setShowCreate(false);
-      setFormData({});
+      setFormData({ features: [], newFeature: '' });
     } catch (error: any) {
       console.error('Failed to create pricing:', error);
       alert(error.response?.data?.message || 'Failed to create pricing');
     }
+  };
+
+  const addFeature = () => {
+    if (!formData.newFeature?.trim()) return;
+    const currentFeatures = formData.features || [];
+    setFormData({
+      ...formData,
+      features: [...currentFeatures, formData.newFeature.trim()],
+      newFeature: '',
+    });
+  };
+
+  const removeFeature = (index: number) => {
+    const currentFeatures = formData.features || [];
+    setFormData({
+      ...formData,
+      features: currentFeatures.filter((_, i) => i !== index),
+    });
   };
 
   if (loading) {
@@ -109,89 +139,185 @@ export default function Pricing() {
       {showCreate && (
         <div className="mb-6 bg-white rounded-lg shadow p-6 border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Create New Pricing Tier</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tier Key *</label>
+                <input
+                  type="text"
+                  value={formData.tier || ''}
+                  onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g., premium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                <input
+                  type="text"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="Premium Tier"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Icon (Emoji)</label>
+                <input
+                  type="text"
+                  value={formData.icon || ''}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="🌱"
+                  maxLength={2}
+                />
+                <p className="text-xs text-gray-500 mt-1">Enter an emoji or icon symbol</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.price || ''}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Price ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.monthlyPrice || ''}
+                  onChange={(e) => setFormData({ ...formData, monthlyPrice: parseFloat(e.target.value) || undefined })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="Auto-calculated from price"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Per Session Price ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.perSessionPrice || ''}
+                  onChange={(e) => setFormData({ ...formData, perSessionPrice: parseFloat(e.target.value) || undefined })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="Auto-calculated"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                <input
+                  type="number"
+                  value={formData.duration || ''}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="60"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
+                <select
+                  value={formData.billingCycle || 'monthly'}
+                  onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="every-4-weeks">Every 4 Weeks</option>
+                  <option value="pay-as-you-go">Pay as You Go</option>
+                  <option value="one-time">One-Time Payment</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sessions Per Month</label>
+                <input
+                  type="number"
+                  value={formData.sessionsPerMonth || ''}
+                  onChange={(e) => setFormData({ ...formData, sessionsPerMonth: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="4"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="popular"
+                  checked={formData.popular || false}
+                  onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <label htmlFor="popular" className="ml-2 text-sm font-medium text-gray-700">
+                  Mark as Popular
+                </label>
+              </div>
+            </div>
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tier Key</label>
-              <input
-                type="text"
-                value={formData.tier || ''}
-                onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="e.g., premium"
+                rows={3}
+                placeholder="Build a strong foundation where growth begins"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-              <input
-                type="text"
-                value={formData.name || ''}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="Premium Tier"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Features</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.newFeature || ''}
+                    onChange={(e) => setFormData({ ...formData, newFeature: e.target.value })}
+                    onKeyPress={(e) => e.key === 'Enter' && addFeature()}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Add a feature (e.g., '2 sessions per month')"
+                  />
+                  <button
+                    onClick={addFeature}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {(formData.features || []).map((feature, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <span className="text-sm text-gray-700">{feature}</span>
+                      <button
+                        onClick={() => removeFeature(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price ($)</label>
-              <input
-                type="number"
-                value={formData.price || ''}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Duration (min)</label>
-              <input
-                type="number"
-                value={formData.duration || ''}
-                onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="60"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
-              <select
-                value={formData.billingCycle || ''}
-                onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
               >
-                <option value="monthly">Monthly</option>
-                <option value="every-4-weeks">Every 4 Weeks</option>
-                <option value="pay-as-you-go">Pay as You Go</option>
-                <option value="one-time">One-Time Payment</option>
-              </select>
+                <Save className="w-4 h-4" />
+                Create
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreate(false);
+                  setFormData({ features: [], newFeature: '' });
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sessions/Month</label>
-              <input
-                type="number"
-                value={formData.sessionsPerMonth || ''}
-                onChange={(e) => setFormData({ ...formData, sessionsPerMonth: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                placeholder="4"
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              <Save className="w-4 h-4" />
-              Create
-            </button>
-            <button
-              onClick={() => {
-                setShowCreate(false);
-                setFormData({});
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              <X className="w-4 h-4" />
-              Cancel
-            </button>
           </div>
         </div>
       )}
@@ -210,7 +336,13 @@ export default function Pricing() {
               </div>
             )}
             <div className="mb-4">
-              <h3 className="text-2xl font-bold text-gray-900">{tierData.name}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                {tierData.icon && <span className="text-3xl">{tierData.icon}</span>}
+                <h3 className="text-2xl font-bold text-gray-900">{tierData.name}</h3>
+              </div>
+              {tierData.description && (
+                <p className="text-sm text-gray-600 mb-2">{tierData.description}</p>
+              )}
               <div className="mt-2 flex items-baseline">
                 <span className="text-4xl font-bold text-gray-900">
                   <DollarSign className="w-6 h-6 inline" />
@@ -230,23 +362,143 @@ export default function Pricing() {
 
             {editing === tier ? (
               <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                    <input
+                      type="text"
+                      value={formData.icon || ''}
+                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="🌱"
+                      maxLength={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.price || ''}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.monthlyPrice || ''}
+                      onChange={(e) => setFormData({ ...formData, monthlyPrice: parseFloat(e.target.value) || undefined })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Per Session ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.perSessionPrice || ''}
+                      onChange={(e) => setFormData({ ...formData, perSessionPrice: parseFloat(e.target.value) || undefined })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+                    <input
+                      type="number"
+                      value={formData.duration || ''}
+                      onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Billing Cycle</label>
+                    <select
+                      value={formData.billingCycle || ''}
+                      onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="every-4-weeks">Every 4 Weeks</option>
+                      <option value="pay-as-you-go">Pay as You Go</option>
+                      <option value="one-time">One-Time</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sessions/Month</label>
+                    <input
+                      type="number"
+                      value={formData.sessionsPerMonth || ''}
+                      onChange={(e) => setFormData({ ...formData, sessionsPerMonth: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                  <input
-                    type="number"
-                    value={formData.price || ''}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    rows={2}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Features</label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formData.newFeature || ''}
+                        onChange={(e) => setFormData({ ...formData, newFeature: e.target.value })}
+                        onKeyPress={(e) => e.key === 'Enter' && addFeature()}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        placeholder="Add feature"
+                      />
+                      <button
+                        onClick={addFeature}
+                        className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {(formData.features || []).map((feature, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
+                          <span className="text-gray-700">{feature}</span>
+                          <button
+                            onClick={() => removeFeature(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center">
                   <input
-                    type="number"
-                    value={formData.duration || ''}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    type="checkbox"
+                    id={`popular-${tier}`}
+                    checked={formData.popular || false}
+                    onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
+                  <label htmlFor={`popular-${tier}`} className="ml-2 text-sm font-medium text-gray-700">
+                    Mark as Popular
+                  </label>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -259,7 +511,7 @@ export default function Pricing() {
                   <button
                     onClick={() => {
                       setEditing(null);
-                      setFormData({});
+                      setFormData({ features: [], newFeature: '' });
                     }}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                   >
@@ -280,6 +532,19 @@ export default function Pricing() {
                   <p>Billing: {tierData.billingCycle === 'every-4-weeks' ? 'Monthly (every 4 weeks)' : tierData.billingCycle}</p>
                   {tierData.sessionsPerMonth > 0 && (
                     <p>Sessions: {tierData.sessionsPerMonth}/month</p>
+                  )}
+                  {tierData.features && tierData.features.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-semibold text-gray-900 mb-1">Features:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {tierData.features.slice(0, 3).map((feature, idx) => (
+                          <li key={idx} className="text-xs text-gray-600">{feature}</li>
+                        ))}
+                        {tierData.features.length > 3 && (
+                          <li className="text-xs text-gray-500">+{tierData.features.length - 3} more</li>
+                        )}
+                      </ul>
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -305,4 +570,3 @@ export default function Pricing() {
     </div>
   );
 }
-
