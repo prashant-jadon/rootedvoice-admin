@@ -160,6 +160,7 @@ export default function Pricing() {
                 <option value="monthly">Monthly</option>
                 <option value="every-4-weeks">Every 4 Weeks</option>
                 <option value="pay-as-you-go">Pay as You Go</option>
+                <option value="one-time">One-Time Payment</option>
               </select>
             </div>
             <div>
@@ -215,6 +216,15 @@ export default function Pricing() {
                   <DollarSign className="w-6 h-6 inline" />
                   {tierData.price}
                 </span>
+                {tierData.billingCycle === 'monthly' && (
+                  <span className="text-lg text-gray-600 ml-2">/month</span>
+                )}
+                {tierData.billingCycle === 'pay-as-you-go' && (
+                  <span className="text-lg text-gray-600 ml-2">/session</span>
+                )}
+                {tierData.billingCycle === 'one-time' && (
+                  <span className="text-lg text-gray-600 ml-2">one-time</span>
+                )}
               </div>
             </div>
 
@@ -260,9 +270,17 @@ export default function Pricing() {
             ) : (
               <div>
                 <div className="text-sm text-gray-600 mb-4">
+                  <p className="font-semibold text-gray-900">
+                    {tierData.billingCycle === 'monthly' && `$${tierData.price}/month`}
+                    {tierData.billingCycle === 'pay-as-you-go' && `$${tierData.price}/session`}
+                    {tierData.billingCycle === 'one-time' && `$${tierData.price} one-time`}
+                    {tierData.billingCycle === 'every-4-weeks' && `$${tierData.price} (billed monthly)`}
+                  </p>
                   <p>Duration: {tierData.duration} minutes</p>
-                  <p>Billing: {tierData.billingCycle}</p>
-                  <p>Sessions: {tierData.sessionsPerMonth}/month</p>
+                  <p>Billing: {tierData.billingCycle === 'every-4-weeks' ? 'Monthly (every 4 weeks)' : tierData.billingCycle}</p>
+                  {tierData.sessionsPerMonth > 0 && (
+                    <p>Sessions: {tierData.sessionsPerMonth}/month</p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button
