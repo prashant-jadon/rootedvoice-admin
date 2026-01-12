@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Calendar,
   MessageCircle,
+  BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Pricing', href: '/pricing', icon: DollarSign },
   { name: 'Payment Split', href: '/payment-split', icon: Settings },
   { name: 'Rate Caps', href: '/rate-caps', icon: TrendingUp },
+  { name: 'Platform Stats', href: '/platform-stats', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

@@ -16,6 +16,7 @@ import Sessions from './pages/Sessions';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import SupportChat from './pages/SupportChat';
+import PlatformStats from './pages/PlatformStats';
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -174,6 +175,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <SupportChat />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/platform-stats"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <PlatformStats />
             </Layout>
           </ProtectedRoute>
         }

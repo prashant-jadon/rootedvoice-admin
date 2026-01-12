@@ -57,6 +57,7 @@ export const adminAPI = {
   
   // Clients
   getClients: (params?: any) => api.get('/admin/clients', { params }),
+  getClientById: (id: string) => api.get(`/admin/clients/${id}`),
   
   // Payments
   getPayments: (params?: any) => api.get('/admin/payments', { params }),
@@ -116,6 +117,10 @@ export const adminAPI = {
     api.get(`/admin/therapists/${therapistId}/activity`, { params }),
   getIncompleteTherapistProfiles: () =>
     api.get('/admin/therapists/incomplete'),
+  
+  // Platform Stats
+  getPlatformStats: () => api.get('/admin/platform-stats'),
+  updatePlatformStats: (data: any) => api.put('/admin/platform-stats', data),
 };
 
 // Message/Support API

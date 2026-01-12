@@ -141,28 +141,28 @@ export default function Pricing() {
         <div className="mb-6 bg-white rounded-lg shadow p-6 border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">Create New Pricing Tier</h2>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tier Key *</label>
-                <input
-                  type="text"
-                  value={formData.tier || ''}
-                  onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="e.g., premium"
-                />
-              </div>
-              <div>
+              <input
+                type="text"
+                value={formData.tier || ''}
+                onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="e.g., premium"
+              />
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                <input
-                  type="text"
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Premium Tier"
-                />
-              </div>
-              <div>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="Premium Tier"
+              />
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Icon (Emoji)</label>
                 <input
                   type="text"
@@ -176,16 +176,16 @@ export default function Pricing() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
-                <input
-                  type="number"
+              <input
+                type="number"
                   step="0.01"
-                  value={formData.price || ''}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="100"
-                />
-              </div>
-              <div>
+                value={formData.price || ''}
+                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="100"
+              />
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Price ($)</label>
                 <input
                   type="number"
@@ -209,14 +209,14 @@ export default function Pricing() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
-                <input
-                  type="number"
-                  value={formData.duration || ''}
-                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="60"
-                />
-              </div>
+              <input
+                type="number"
+                value={formData.duration || ''}
+                onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                placeholder="60"
+              />
+            </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Duration Range (for comparison table)</label>
                 <input
@@ -228,24 +228,24 @@ export default function Pricing() {
                 />
                 <p className="text-xs text-gray-500 mt-1">Optional: Used only in comparison table (e.g., "45-50 mins")</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
-                <select
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Billing Cycle</label>
+              <select
                   value={formData.billingCycle || 'monthly'}
-                  onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="every-4-weeks">Every 4 Weeks</option>
-                  <option value="pay-as-you-go">Pay as You Go</option>
+                onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="every-4-weeks">Every 4 Weeks</option>
+                <option value="pay-as-you-go">Pay as You Go</option>
                   <option value="one-time">One-Time Payment</option>
-                </select>
-              </div>
-              <div>
+              </select>
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Sessions Per Month</label>
-                <input
-                  type="number"
-                  value={formData.sessionsPerMonth || ''}
+              <input
+                type="number"
+                value={formData.sessionsPerMonth || ''}
                   onChange={(e) => setFormData({ ...formData, sessionsPerMonth: parseInt(e.target.value) || 0 })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   placeholder="4"
@@ -287,7 +287,7 @@ export default function Pricing() {
                     onKeyPress={(e) => e.key === 'Enter' && addFeature()}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                     placeholder="Add a feature (e.g., '2 sessions per month')"
-                  />
+              />
                   <button
                     onClick={addFeature}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -308,27 +308,27 @@ export default function Pricing() {
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
+          </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={handleCreate}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                <Save className="w-4 h-4" />
-                Create
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreate(false);
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              <Save className="w-4 h-4" />
+              Create
+            </button>
+            <button
+              onClick={() => {
+                setShowCreate(false);
                   setFormData({ features: [], newFeature: '' });
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
             </div>
           </div>
         </div>
@@ -350,7 +350,7 @@ export default function Pricing() {
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-2">
                 {tierData.icon && <span className="text-3xl">{tierData.icon}</span>}
-                <h3 className="text-2xl font-bold text-gray-900">{tierData.name}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{tierData.name}</h3>
               </div>
               {tierData.description && (
                 <p className="text-sm text-gray-600 mb-2">{tierData.description}</p>
@@ -395,13 +395,13 @@ export default function Pricing() {
                       maxLength={2}
                     />
                   </div>
-                  <div>
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-                    <input
-                      type="number"
+                  <input
+                    type="number"
                       step="0.01"
-                      value={formData.price || ''}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                    value={formData.price || ''}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     />
                   </div>
@@ -553,7 +553,7 @@ export default function Pricing() {
                   <p>Duration: {tierData.duration} minutes</p>
                   <p>Billing: {tierData.billingCycle === 'every-4-weeks' ? 'Monthly (every 4 weeks)' : tierData.billingCycle}</p>
                   {tierData.sessionsPerMonth > 0 && (
-                    <p>Sessions: {tierData.sessionsPerMonth}/month</p>
+                  <p>Sessions: {tierData.sessionsPerMonth}/month</p>
                   )}
                   {tierData.features && tierData.features.length > 0 && (
                     <div className="mt-2">
