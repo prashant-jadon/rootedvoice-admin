@@ -27,6 +27,17 @@ interface Therapist {
       documentUrl?: string;
       verified?: boolean;
     };
+
+    stateLicensures?: Array<{
+      _id: string;
+      licenseNumber?: string;
+      state?: string;
+      expirationDate?: string;
+      documentUrl?: string;
+      verified?: boolean;
+      verifiedAt?: string;
+      verifiedBy?: string;
+    }>;
     stateLicensure?: {
       licenseNumber?: string;
       state?: string;
@@ -125,7 +136,7 @@ export default function Therapists() {
     try {
       const params: any = {};
       if (search) params.search = search;
-      
+
       const response = await adminAPI.getTherapists(params);
       setTherapists(response.data.data);
     } catch (error) {
@@ -149,9 +160,9 @@ export default function Therapists() {
     }
   };
 
-  const handleComplianceVerify = async (therapistId: string, documentType: string, verified: boolean, notes?: string) => {
+  const handleComplianceVerify = async (therapistId: string, documentType: string, verified: boolean, notes?: string, credentialId?: string) => {
     try {
-      await adminAPI.verifyTherapistCompliance(therapistId, documentType, verified, notes);
+      await adminAPI.verifyTherapistCompliance(therapistId, documentType, verified, notes, credentialId);
       await fetchTherapists();
       setShowComplianceModal(false);
       setSelectedTherapist(null);
@@ -524,7 +535,7 @@ export default function Therapists() {
             <p className="text-sm text-gray-600 mb-4">
               Therapist: <strong>{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</strong>
             </p>
-            
+
             <div className="space-y-6">
               {/* ASHA Certification (SLP Only) */}
               {selectedTherapist.credentials === 'SLP' && (
@@ -576,54 +587,110 @@ export default function Therapists() {
               )}
 
               {/* State Licensure */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">State Licensure</label>
-                  {selectedTherapist.complianceDocuments?.stateLicensure?.verified ? (
-                    <span className="text-green-600 text-sm flex items-center gap-1">
-                      <CheckCircle className="w-4 h-4" /> Verified
-                    </span>
-                  ) : (
-                    <span className="text-yellow-600 text-sm flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" /> Pending
-                    </span>
-                  )}
-                </div>
-                {selectedTherapist.complianceDocuments?.stateLicensure && (
-                  <div className="mb-3 space-y-1 text-sm">
-                    {selectedTherapist.complianceDocuments.stateLicensure.licenseNumber && (
-                      <div><span className="text-gray-600">License #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicensure.licenseNumber}</span></div>
-                    )}
-                    {selectedTherapist.complianceDocuments.stateLicensure.state && (
-                      <div><span className="text-gray-600">Licensing State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicensure.state}</span></div>
-                    )}
-                    {selectedTherapist.complianceDocuments.stateLicensure.expirationDate && (
-                      <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.stateLicensure.expirationDate).toLocaleDateString()}</span></div>
-                    )}
-                    {selectedTherapist.complianceDocuments.stateLicensure.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.stateLicensure.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
+              {(selectedTherapist.complianceDocuments?.stateLicensures && selectedTherapist.complianceDocuments.stateLicensures.length > 0) ? (
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">State Licensures</label>
+                  <div className="space-y-4">
+                    {selectedTherapist.complianceDocuments.stateLicensures.map((license, index) => (
+                      <div key={license._id || index} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-gray-800">{license.state} License</span>
+                          {license.verified ? (
+                            <span className="text-green-600 text-sm flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4" /> Verified
+                            </span>
+                          ) : (
+                            <span className="text-yellow-600 text-sm flex items-center gap-1">
+                              <AlertCircle className="w-4 h-4" /> Pending
+                            </span>
+                          )}
+                        </div>
+                        <div className="mb-3 space-y-1 text-sm">
+                          {license.licenseNumber && (
+                            <div><span className="text-gray-600">License #:</span> <span className="font-medium">{license.licenseNumber}</span></div>
+                          )}
+                          {license.state && (
+                            <div><span className="text-gray-600">State:</span> <span className="font-medium">{license.state}</span></div>
+                          )}
+                          {license.expirationDate && (
+                            <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(license.expirationDate).toLocaleDateString()}</span></div>
+                          )}
+                          {license.documentUrl && (
+                            <div>
+                              <a href={license.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                                View Document
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensures', true, undefined, license._id)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                          >
+                            ✓ Verify
+                          </button>
+                          <button
+                            onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensures', false, undefined, license._id)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                          >
+                            ✗ Reject
+                          </button>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-gray-700">State Licensure</label>
+                    {selectedTherapist.complianceDocuments?.stateLicensure?.verified ? (
+                      <span className="text-green-600 text-sm flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> Verified
+                      </span>
+                    ) : (
+                      <span className="text-yellow-600 text-sm flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" /> Pending
+                      </span>
                     )}
                   </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensure', true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                  >
-                    ✓ Verify
-                  </button>
-                  <button
-                    onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensure', false)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-                  >
-                    ✗ Reject
-                  </button>
+                  {selectedTherapist.complianceDocuments?.stateLicensure && (
+                    <div className="mb-3 space-y-1 text-sm">
+                      {selectedTherapist.complianceDocuments.stateLicensure.licenseNumber && (
+                        <div><span className="text-gray-600">License #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicensure.licenseNumber}</span></div>
+                      )}
+                      {selectedTherapist.complianceDocuments.stateLicensure.state && (
+                        <div><span className="text-gray-600">Licensing State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicensure.state}</span></div>
+                      )}
+                      {selectedTherapist.complianceDocuments.stateLicensure.expirationDate && (
+                        <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.stateLicensure.expirationDate).toLocaleDateString()}</span></div>
+                      )}
+                      {selectedTherapist.complianceDocuments.stateLicensure.documentUrl && (
+                        <div>
+                          <a href={selectedTherapist.complianceDocuments.stateLicensure.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                            View Document
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensure', true)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    >
+                      ✓ Verify
+                    </button>
+                    <button
+                      onClick={() => handleComplianceVerify(selectedTherapist._id, 'stateLicensure', false)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                    >
+                      ✗ Reject
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Supervision (SLPA Only) */}
               {selectedTherapist.credentials === 'SLPA' && (
