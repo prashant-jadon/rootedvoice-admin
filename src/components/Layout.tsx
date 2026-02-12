@@ -5,7 +5,6 @@ import {
   Users,
   UserCheck,
   UserCircle,
-  CreditCard,
   DollarSign,
   Settings,
   LogOut,

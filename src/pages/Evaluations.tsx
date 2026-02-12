@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-    FileText,
     Search,
-    Filter,
     Plus,
-    ChevronRight,
-    CheckCircle,
-    Clock,
-    AlertCircle,
     X,
     Save,
     Trash2
@@ -55,7 +49,6 @@ const Evaluations = () => {
     const fetchEvaluations = async () => {
         try {
             setLoading(true);
-            setLoading(true);
             // Use local storage key consistent with AuthContext or use configured instance
             const token = localStorage.getItem('admin_token');
             const response = await axios.get(`${API_URL}/evaluations`, {
@@ -69,20 +62,14 @@ const Evaluations = () => {
         }
     };
 
-    const handleCreateEvaluation = (client) => {
-        // Logic to create a new evaluation for a client (if not exists)
-        // For this demo, we assume the backend creates the record when they book.
-        // So we just edit "questions".
-    };
-
-    const openBuilder = (evaluation) => {
+    const openBuilder = (evaluation: Evaluation) => {
         setSelectedEvaluation(evaluation);
         setQuestions(evaluation.questions || []);
         setIsModalOpen(true);
     };
 
     const addQuestion = (type = 'text') => {
-        const newQuestion = {
+        const newQuestion: Question = {
             id: Date.now().toString(),
             text: '',
             type,
@@ -92,18 +79,20 @@ const Evaluations = () => {
         setQuestions([...questions, newQuestion]);
     };
 
-    const updateQuestion = (id, field, value) => {
+    const updateQuestion = (id: string, field: string, value: any) => {
         setQuestions(questions.map(q =>
             q.id === id ? { ...q, [field]: value } : q
         ));
     };
 
-    const removeQuestion = (id) => {
+    const removeQuestion = (id: string) => {
         setQuestions(questions.filter(q => q.id !== id));
     };
 
     const saveQuestions = async () => {
         try {
+            if (!selectedEvaluation) return;
+
             const token = localStorage.getItem('admin_token');
             await axios.put(`${API_URL}/evaluations/${selectedEvaluation._id}/questions`, {
                 questions
@@ -290,7 +279,7 @@ const Evaluations = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {questions.map((q, index) => (
+                                    {questions.map((q) => (
                                         <div key={q.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative group">
                                             <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => removeQuestion(q.id)} className="text-red-500 hover:text-red-700">
