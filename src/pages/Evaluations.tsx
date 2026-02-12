@@ -55,11 +55,9 @@ const Evaluations = () => {
     const fetchEvaluations = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            // Fetch all evaluations
-            // In a real app, we might also want to fetch "Users who need evaluation but don't have one created yet"
-            // For now, let's assume we fetch existing eval records. 
-            // If we implement "Booking creates Evaluation Record", then they will appear here.
+            setLoading(true);
+            // Use local storage key consistent with AuthContext or use configured instance
+            const token = localStorage.getItem('admin_token');
             const response = await axios.get(`${API_URL}/evaluations`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -106,7 +104,7 @@ const Evaluations = () => {
 
     const saveQuestions = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('admin_token');
             await axios.put(`${API_URL}/evaluations/${selectedEvaluation._id}/questions`, {
                 questions
             }, {
@@ -118,6 +116,20 @@ const Evaluations = () => {
         } catch (error) {
             console.error('Error saving questions:', error);
             alert('Failed to save questionnaire');
+        }
+    };
+
+    const markAsReviewed = async (evaluationId: string) => {
+        try {
+            const token = localStorage.getItem('admin_token');
+            await axios.put(`${API_URL}/evaluations/${evaluationId}/review`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchEvaluations();
+            alert('Evaluation marked as reviewed. Client can now book sessions.');
+        } catch (error) {
+            console.error('Error marking as reviewed:', error);
+            alert('Failed to mark evaluation as reviewed');
         }
     };
 
@@ -204,10 +216,12 @@ const Evaluations = () => {
                                                 <td className="px-6 py-4">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                             ${evaluation.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            evaluation.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                                                                'bg-yellow-100 text-yellow-800'}`}>
+                                                            evaluation.status === 'reviewed' ? 'bg-purple-100 text-purple-800' :
+                                                                evaluation.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                                                                    'bg-yellow-100 text-yellow-800'}`}>
                                                         {evaluation.status === 'completed' ? 'Completed' :
-                                                            evaluation.status === 'assigned' ? 'Assigned' : 'Draft'}
+                                                            evaluation.status === 'reviewed' ? 'Reviewed ✓' :
+                                                                evaluation.status === 'assigned' ? 'Assigned' : 'Draft'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-600">
@@ -221,8 +235,16 @@ const Evaluations = () => {
                                                         onClick={() => openBuilder(evaluation)}
                                                         className="text-black font-medium hover:underline mr-4"
                                                     >
-                                                        {evaluation.status === 'completed' ? 'View Answers' : 'Edit Questions'}
+                                                        {evaluation.status === 'completed' || evaluation.status === 'reviewed' ? 'View Answers' : 'Edit Questions'}
                                                     </button>
+                                                    {evaluation.status === 'completed' && (
+                                                        <button
+                                                            onClick={() => markAsReviewed(evaluation._id)}
+                                                            className="text-purple-600 font-medium hover:underline"
+                                                        >
+                                                            Mark as Reviewed
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))

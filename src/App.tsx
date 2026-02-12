@@ -190,6 +190,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/evaluations"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Evaluations />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
