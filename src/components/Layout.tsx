@@ -15,6 +15,7 @@ import {
   Calendar,
   MessageCircle,
   BarChart3,
+  FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,10 +25,10 @@ const navigation = [
   { name: 'Therapists', href: '/therapists', icon: UserCheck },
   { name: 'Therapist Earnings', href: '/therapists/earnings', icon: DollarSign },
   { name: 'Clients', href: '/clients', icon: UserCircle },
-  { name: 'Sessions', href: '/sessions', icon: Calendar },
-  { name: 'Payments', href: '/payments', icon: CreditCard },
+  { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: TrendingUp },
   { name: 'Support Chat', href: '/support-chat', icon: MessageCircle },
+  { name: 'Evaluations', href: '/evaluations', icon: FileText },
   { name: 'Pricing', href: '/pricing', icon: DollarSign },
   { name: 'Payment Split', href: '/payment-split', icon: Settings },
   { name: 'Rate Caps', href: '/rate-caps', icon: TrendingUp },
@@ -58,9 +59,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
@@ -81,11 +81,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   key={item.name}
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                    ? 'bg-indigo-50 text-indigo-700 font-medium'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.name}</span>

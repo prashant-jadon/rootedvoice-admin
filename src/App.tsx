@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import SupportChat from './pages/SupportChat';
 import PlatformStats from './pages/PlatformStats';
+import Evaluations from './pages/Evaluations';
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
