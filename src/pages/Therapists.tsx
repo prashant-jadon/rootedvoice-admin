@@ -117,6 +117,11 @@ interface Therapist {
       documentUrl?: string;
     };
   };
+  availability?: Array<{
+    day: string;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 
 export default function Therapists() {
@@ -535,6 +540,40 @@ export default function Therapists() {
             <p className="text-sm text-gray-600 mb-4">
               Therapist: <strong>{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</strong>
             </p>
+
+            {/* Weekly Availability */}
+            <div className="border border-blue-200 rounded-lg p-4 mb-6 bg-blue-50">
+              <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Weekly Availability
+              </h4>
+              {selectedTherapist.availability && selectedTherapist.availability.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Group slots by day for display */}
+                  {Object.entries(
+                    selectedTherapist.availability.reduce((acc: any, slot: any) => {
+                      if (!acc[slot.day]) acc[slot.day] = [];
+                      acc[slot.day].push({ startTime: slot.startTime, endTime: slot.endTime });
+                      return acc;
+                    }, {})
+                  ).map(([day, slots]: [string, any], idx) => (
+                    <div key={idx} className="bg-white rounded-lg px-3 py-2 border border-blue-100">
+                      <span className="font-medium text-gray-800 text-sm">{day}</span>
+                      <div className="mt-1 space-y-1">
+                        {slots.map((s: any, sIdx: number) => (
+                          <div key={sIdx} className="text-xs text-gray-600 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-blue-500" />
+                            {s.startTime} — {s.endTime}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-blue-600 italic">No availability set by this therapist yet.</p>
+              )}
+            </div>
 
             <div className="space-y-6">
               {/* ASHA Certification (SLP Only) */}

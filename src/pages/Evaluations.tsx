@@ -2,59 +2,101 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Search,
-    Plus,
     X,
-    Save,
-    Trash2
+    Eye,
+    Users,
+    Clock,
+    CheckCircle,
+    AlertCircle,
+    CreditCard,
+    Video,
+    FileText,
+    RefreshCw,
+    UserPlus
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-interface Question {
-    id: string;
-    text: string;
-    type: string;
-    options?: string[];
-    required: boolean;
-}
-
 interface Evaluation {
     _id: string;
     clientId: {
-        firstName: string;
-        lastName: string;
-        email: string;
+        _id: string;
+        userId: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+        };
+    };
+    therapistId?: {
+        _id: string;
+        userId: {
+            _id: string;
+            firstName: string;
+            lastName: string;
+        };
+        credentials?: string;
     };
     status: string;
-    questions: Question[];
-    answers?: { questionId: string; answer: any }[];
+    amountPaid: number;
+    scheduledDate?: string;
+    scheduledTime?: string;
+    therapistReviewDeadline?: string;
+    meetingLink?: string;
+    meetingDuration?: number;
+    recommendations?: {
+        subscriptionTier?: string;
+        notes?: string;
+        resourceIds?: string[];
+    };
     createdAt: string;
+    updatedAt: string;
 }
+
+interface Therapist {
+    _id: string;
+    userId: { _id: string; firstName: string; lastName: string };
+    credentials?: string;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+    pending_payment: { label: 'Pending Payment', color: 'bg-yellow-100 text-yellow-800', icon: CreditCard },
+    paid: { label: 'Paid', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+    therapist_assigned: { label: 'Therapist Assigned', color: 'bg-blue-100 text-blue-800', icon: Users },
+    therapist_reviewing: { label: 'Therapist Reviewing', color: 'bg-indigo-100 text-indigo-800', icon: Clock },
+    ready_for_meeting: { label: 'Ready for Meeting', color: 'bg-emerald-100 text-emerald-800', icon: Video },
+    meeting_scheduled: { label: 'Meeting Scheduled', color: 'bg-teal-100 text-teal-800', icon: Video },
+    in_progress: { label: 'In Progress', color: 'bg-purple-100 text-purple-800', icon: Video },
+    completed: { label: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+    recommendations_sent: { label: 'Recommendations Sent', color: 'bg-green-200 text-green-900', icon: FileText },
+    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+};
 
 const Evaluations = () => {
     const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Modal State
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
-    const [questions, setQuestions] = useState<Question[]>([]);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [availableTherapists, setAvailableTherapists] = useState<Therapist[]>([]);
+    const [assigningTherapist, setAssigningTherapist] = useState(false);
+    const [selectedTherapistId, setSelectedTherapistId] = useState('');
 
     useEffect(() => {
         fetchEvaluations();
     }, []);
 
+    const getToken = () => localStorage.getItem('admin_token');
+
     const fetchEvaluations = async () => {
         try {
             setLoading(true);
-            // Use local storage key consistent with AuthContext or use configured instance
-            const token = localStorage.getItem('admin_token');
+            const token = getToken();
             const response = await axios.get(`${API_URL}/evaluations`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setEvaluations(response.data.data);
+            setEvaluations(response.data.data || []);
         } catch (error) {
             console.error('Error fetching evaluations:', error);
         } finally {
@@ -62,95 +104,99 @@ const Evaluations = () => {
         }
     };
 
-    const openBuilder = (evaluation: Evaluation) => {
-        setSelectedEvaluation(evaluation);
-        setQuestions(evaluation.questions || []);
-        setIsModalOpen(true);
-    };
-
-    const addQuestion = (type = 'text') => {
-        const newQuestion: Question = {
-            id: Date.now().toString(),
-            text: '',
-            type,
-            options: type === 'radio' || type === 'select' ? ['Option 1'] : [],
-            required: true
-        };
-        setQuestions([...questions, newQuestion]);
-    };
-
-    const updateQuestion = (id: string, field: string, value: any) => {
-        setQuestions(questions.map(q =>
-            q.id === id ? { ...q, [field]: value } : q
-        ));
-    };
-
-    const removeQuestion = (id: string) => {
-        setQuestions(questions.filter(q => q.id !== id));
-    };
-
-    const saveQuestions = async () => {
+    const fetchTherapists = async () => {
         try {
-            if (!selectedEvaluation) return;
-
-            const token = localStorage.getItem('admin_token');
-            await axios.put(`${API_URL}/evaluations/${selectedEvaluation._id}/questions`, {
-                questions
-            }, {
+            const token = getToken();
+            const response = await axios.get(`${API_URL}/evaluations/available-therapists`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setIsModalOpen(false);
-            fetchEvaluations();
-            alert('Questionnaire updated successfully');
+            setAvailableTherapists(response.data.data?.therapists || []);
         } catch (error) {
-            console.error('Error saving questions:', error);
-            alert('Failed to save questionnaire');
+            console.error('Error fetching therapists:', error);
         }
     };
 
-    const markAsReviewed = async (evaluationId: string) => {
+    const assignTherapist = async (evaluationId: string, therapistId: string) => {
         try {
-            const token = localStorage.getItem('admin_token');
-            await axios.put(`${API_URL}/evaluations/${evaluationId}/review`, {}, {
+            setAssigningTherapist(true);
+            const token = getToken();
+            await axios.put(`${API_URL}/evaluations/${evaluationId}/assign-therapist`, {
+                therapistId
+            }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            alert('Therapist assigned successfully');
             fetchEvaluations();
-            alert('Evaluation marked as reviewed. Client can now book sessions.');
-        } catch (error) {
-            console.error('Error marking as reviewed:', error);
-            alert('Failed to mark evaluation as reviewed');
+            setIsDetailOpen(false);
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Failed to assign therapist');
+        } finally {
+            setAssigningTherapist(false);
+        }
+    };
+
+    const openDetail = (evaluation: Evaluation) => {
+        setSelectedEvaluation(evaluation);
+        setIsDetailOpen(true);
+        if (['paid'].includes(evaluation.status)) {
+            fetchTherapists();
         }
     };
 
     const filteredEvaluations = evaluations.filter(ev => {
-        const matchesSearch = ev.clientId?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ev.clientId?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
+        const clientName = `${ev.clientId?.userId?.firstName || ''} ${ev.clientId?.userId?.lastName || ''}`.toLowerCase();
+        const matchesSearch = clientName.includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'all' || ev.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
+    const getStatusBadge = (status: string) => {
+        const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
+        const Icon = config.icon;
+        return (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+                <Icon className="w-3 h-3" />
+                {config.label}
+            </span>
+        );
+    };
+
     return (
         <div className="flex h-screen bg-gray-50 font-sans">
-
-
             <div className="flex-1 overflow-auto">
                 <header className="bg-white shadow-sm border-b border-gray-200 p-6">
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Evaluations</h1>
-                            <p className="text-sm text-gray-500 mt-1">Manage client intake forms and questionnaires</p>
+                            <p className="text-sm text-gray-500 mt-1">Manage diagnostic evaluation bookings and therapist assignments</p>
                         </div>
                         <button
-                            onClick={() => { }} // TODO: Add manual create
-                            className="bg-black text-white px-4 py-2 rounded-lg font-medium flex items-center hover:bg-gray-800"
+                            onClick={fetchEvaluations}
+                            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center hover:bg-gray-50"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Evaluation
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Refresh
                         </button>
                     </div>
                 </header>
 
                 <main className="p-6">
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                        {[
+                            { label: 'Total', count: evaluations.length, color: 'text-gray-900' },
+                            { label: 'Pending Payment', count: evaluations.filter(e => e.status === 'pending_payment').length, color: 'text-yellow-600' },
+                            { label: 'Paid / Awaiting Assignment', count: evaluations.filter(e => e.status === 'paid').length, color: 'text-green-600' },
+                            { label: 'In Review', count: evaluations.filter(e => ['therapist_assigned', 'therapist_reviewing'].includes(e.status)).length, color: 'text-blue-600' },
+                            { label: 'Completed', count: evaluations.filter(e => ['completed', 'recommendations_sent'].includes(e.status)).length, color: 'text-purple-600' },
+                        ].map((stat) => (
+                            <div key={stat.label} className="bg-white rounded-lg border border-gray-200 p-4">
+                                <p className="text-xs text-gray-500 uppercase font-medium">{stat.label}</p>
+                                <p className={`text-2xl font-bold ${stat.color}`}>{stat.count}</p>
+                            </div>
+                        ))}
+                    </div>
+
                     {/* Filters */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <div className="relative flex-1">
@@ -169,71 +215,84 @@ const Evaluations = () => {
                             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                         >
                             <option value="all">All Status</option>
-                            <option value="assigned">Assigned</option>
+                            <option value="pending_payment">Pending Payment</option>
+                            <option value="paid">Paid</option>
+                            <option value="therapist_assigned">Therapist Assigned</option>
+                            <option value="therapist_reviewing">Therapist Reviewing</option>
+                            <option value="ready_for_meeting">Ready for Meeting</option>
+                            <option value="meeting_scheduled">Meeting Scheduled</option>
+                            <option value="in_progress">In Progress</option>
                             <option value="completed">Completed</option>
-                            <option value="pending_creation">Pending Creation</option>
+                            <option value="recommendations_sent">Recommendations Sent</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
 
-                    {/* List */}
+                    {/* Table */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
                                         <th className="px-6 py-4 font-semibold text-gray-900">Client</th>
+                                        <th className="px-6 py-4 font-semibold text-gray-900">Therapist</th>
                                         <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
-                                        <th className="px-6 py-4 font-semibold text-gray-900">Questions</th>
-                                        <th className="px-6 py-4 font-semibold text-gray-900">Date Created</th>
+                                        <th className="px-6 py-4 font-semibold text-gray-900">Amount</th>
+                                        <th className="px-6 py-4 font-semibold text-gray-900">Scheduled</th>
+                                        <th className="px-6 py-4 font-semibold text-gray-900">Created</th>
                                         <th className="px-6 py-4 font-semibold text-gray-900">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {loading ? (
-                                        <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Loading...</td></tr>
+                                        <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-500">Loading...</td></tr>
                                     ) : filteredEvaluations.length === 0 ? (
-                                        <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No evaluations found</td></tr>
+                                        <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-500">No evaluations found</td></tr>
                                     ) : (
                                         filteredEvaluations.map((evaluation) => (
                                             <tr key={evaluation._id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="font-medium text-gray-900">
-                                                        {evaluation.clientId?.firstName} {evaluation.clientId?.lastName}
+                                                        {evaluation.clientId?.userId?.firstName} {evaluation.clientId?.userId?.lastName}
                                                     </div>
-                                                    <div className="text-sm text-gray-500">{evaluation.clientId?.email}</div>
+                                                    <div className="text-sm text-gray-500">{evaluation.clientId?.userId?.email}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">
+                                                    {evaluation.therapistId ? (
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {evaluation.therapistId.userId?.firstName} {evaluation.therapistId.userId?.lastName}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">{evaluation.therapistId.credentials}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-400 italic">Not assigned</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            ${evaluation.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            evaluation.status === 'reviewed' ? 'bg-purple-100 text-purple-800' :
-                                                                evaluation.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                                                                    'bg-yellow-100 text-yellow-800'}`}>
-                                                        {evaluation.status === 'completed' ? 'Completed' :
-                                                            evaluation.status === 'reviewed' ? 'Reviewed ✓' :
-                                                                evaluation.status === 'assigned' ? 'Assigned' : 'Draft'}
-                                                    </span>
+                                                    {getStatusBadge(evaluation.status)}
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-600">
-                                                    {evaluation.questions?.length || 0} questions
+                                                    ${evaluation.amountPaid || 0}
                                                 </td>
-                                                <td className="px-6 py-4 text-gray-600">
+                                                <td className="px-6 py-4 text-gray-600 text-sm">
+                                                    {evaluation.scheduledDate
+                                                        ? new Date(evaluation.scheduledDate).toLocaleDateString()
+                                                        : '—'}
+                                                    {evaluation.scheduledTime && (
+                                                        <div className="text-xs text-gray-400">{evaluation.scheduledTime}</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600 text-sm">
                                                     {new Date(evaluation.createdAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <button
-                                                        onClick={() => openBuilder(evaluation)}
-                                                        className="text-black font-medium hover:underline mr-4"
+                                                        onClick={() => openDetail(evaluation)}
+                                                        className="text-black font-medium hover:underline flex items-center gap-1"
                                                     >
-                                                        {evaluation.status === 'completed' || evaluation.status === 'reviewed' ? 'View Answers' : 'Edit Questions'}
+                                                        <Eye className="w-4 h-4" /> View
                                                     </button>
-                                                    {evaluation.status === 'completed' && (
-                                                        <button
-                                                            onClick={() => markAsReviewed(evaluation._id)}
-                                                            className="text-purple-600 font-medium hover:underline"
-                                                        >
-                                                            Mark as Reviewed
-                                                        </button>
-                                                    )}
                                                 </td>
                                             </tr>
                                         ))
@@ -245,125 +304,133 @@ const Evaluations = () => {
                 </main>
             </div>
 
-            {/* Form Builder Modal */}
-            {isModalOpen && (
+            {/* Detail Modal */}
+            {isDetailOpen && selectedEvaluation && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">Evaluation Questionnaire Builder</h2>
+                                <h2 className="text-xl font-bold text-gray-900">Evaluation Details</h2>
                                 <p className="text-sm text-gray-500">
-                                    Client: {selectedEvaluation?.clientId?.firstName} {selectedEvaluation?.clientId?.lastName}
+                                    {selectedEvaluation.clientId?.userId?.firstName} {selectedEvaluation.clientId?.userId?.lastName}
                                 </p>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-black">
+                            <button onClick={() => setIsDetailOpen(false)} className="text-gray-500 hover:text-black">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-                            {/* Check if already completed */}
-                            {selectedEvaluation?.status === 'completed' ? (
-                                <div className="space-y-6">
-                                    {selectedEvaluation.answers?.map((ans, idx) => {
-                                        const q = questions.find(q => q.id === ans.questionId);
-                                        return (
-                                            <div key={idx} className="bg-white p-6 rounded-lg border border-gray-100">
-                                                <p className="font-semibold text-gray-900 mb-2">{q?.text || 'Unknown Question'}</p>
-                                                <div className="p-4 bg-gray-50 rounded text-gray-700">
-                                                    {ans.answer}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {questions.map((q) => (
-                                        <div key={q.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative group">
-                                            <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => removeQuestion(q.id)} className="text-red-500 hover:text-red-700">
-                                                    <Trash2 className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                            <div className="grid gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-                                                    <input
-                                                        type="text"
-                                                        value={q.text}
-                                                        onChange={(e) => updateQuestion(q.id, 'text', e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                                        placeholder="e.g., What are your primary concerns?"
-                                                    />
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <div className="w-1/3">
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                                        <select
-                                                            value={q.type}
-                                                            onChange={(e) => updateQuestion(q.id, 'type', e.target.value)}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                                        >
-                                                            <option value="text">Short Text</option>
-                                                            <option value="textarea">Long Text</option>
-                                                            <option value="select">Dropdown</option>
-                                                            <option value="radio">Multiple Choice</option>
-                                                        </select>
-                                                    </div>
-                                                    <div className="flex items-center mt-6">
-                                                        <label className="flex items-center cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={q.required}
-                                                                onChange={(e) => updateQuestion(q.id, 'required', e.target.checked)}
-                                                                className="mr-2"
-                                                            />
-                                                            <span className="text-sm text-gray-600">Required</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                {(q.type === 'select' || q.type === 'radio') && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Options (comma separated)</label>
-                                                        <input
-                                                            type="text"
-                                                            value={q.options?.join(', ')}
-                                                            onChange={(e) => updateQuestion(q.id, 'options', e.target.value.split(',').map(s => s.trim()))}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                                            placeholder="Option 1, Option 2, Option 3"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                        <div className="p-6 space-y-6">
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-700">Status</span>
+                                {getStatusBadge(selectedEvaluation.status)}
+                            </div>
 
-                                    <div className="flex justify-center gap-4 mt-8">
-                                        <button onClick={() => addQuestion('text')} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">+ Add Text Question</button>
-                                        <button onClick={() => addQuestion('textarea')} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">+ Add Long Text</button>
-                                        <button onClick={() => addQuestion('radio')} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">+ Add Multiple Choice</button>
+                            {/* Payment Info */}
+                            <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase">Amount Paid</span>
+                                    <p className="font-semibold text-gray-900">${selectedEvaluation.amountPaid || 0}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase">Created</span>
+                                    <p className="font-semibold text-gray-900">{new Date(selectedEvaluation.createdAt).toLocaleString()}</p>
+                                </div>
+                                {selectedEvaluation.scheduledDate && (
+                                    <div>
+                                        <span className="text-xs text-gray-500 uppercase">Scheduled Date</span>
+                                        <p className="font-semibold text-gray-900">{new Date(selectedEvaluation.scheduledDate).toLocaleDateString()}</p>
                                     </div>
+                                )}
+                                {selectedEvaluation.scheduledTime && (
+                                    <div>
+                                        <span className="text-xs text-gray-500 uppercase">Scheduled Time</span>
+                                        <p className="font-semibold text-gray-900">{selectedEvaluation.scheduledTime}</p>
+                                    </div>
+                                )}
+                                {selectedEvaluation.therapistReviewDeadline && (
+                                    <div>
+                                        <span className="text-xs text-gray-500 uppercase">Review Deadline</span>
+                                        <p className="font-semibold text-gray-900">{new Date(selectedEvaluation.therapistReviewDeadline).toLocaleDateString()}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Therapist Info */}
+                            {selectedEvaluation.therapistId && (
+                                <div className="border rounded-lg p-4">
+                                    <span className="text-sm font-medium text-gray-700">Assigned Therapist</span>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">
+                                            {selectedEvaluation.therapistId.userId?.firstName?.[0]}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">
+                                                {selectedEvaluation.therapistId.userId?.firstName} {selectedEvaluation.therapistId.userId?.lastName}
+                                            </p>
+                                            <p className="text-sm text-gray-500">{selectedEvaluation.therapistId.credentials}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Admin Therapist Assignment (for "paid" status) */}
+                            {selectedEvaluation.status === 'paid' && !selectedEvaluation.therapistId && (
+                                <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                        <UserPlus className="w-4 h-4" /> Assign Therapist (Admin)
+                                    </h3>
+                                    <select
+                                        value={selectedTherapistId}
+                                        onChange={e => setSelectedTherapistId(e.target.value)}
+                                        className="w-full mb-3 px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="">Select a therapist...</option>
+                                        {availableTherapists.map(t => (
+                                            <option key={t._id} value={t._id}>
+                                                {t.userId.firstName} {t.userId.lastName} {t.credentials ? `(${t.credentials})` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => {
+                                            if (selectedTherapistId) {
+                                                assignTherapist(selectedEvaluation._id, selectedTherapistId);
+                                            }
+                                        }}
+                                        disabled={!selectedTherapistId || assigningTherapist}
+                                        className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                                    >
+                                        {assigningTherapist ? 'Assigning...' : 'Assign Therapist'}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Recommendations */}
+                            {selectedEvaluation.recommendations && (
+                                <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-green-800 mb-2">Recommendations</h3>
+                                    {selectedEvaluation.recommendations.subscriptionTier && (
+                                        <p className="text-green-700 text-sm">
+                                            <strong>Recommended Plan:</strong>{' '}
+                                            <span className="capitalize">{selectedEvaluation.recommendations.subscriptionTier}</span>
+                                        </p>
+                                    )}
+                                    {selectedEvaluation.recommendations.notes && (
+                                        <p className="text-green-700 text-sm mt-1">{selectedEvaluation.recommendations.notes}</p>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        <div className="p-6 border-t border-gray-200 bg-white flex justify-end gap-3">
+                        <div className="p-6 border-t border-gray-200 flex justify-end">
                             <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                                onClick={() => setIsDetailOpen(false)}
+                                className="px-6 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
                             >
-                                Cancel
+                                Close
                             </button>
-                            {selectedEvaluation?.status !== 'completed' && (
-                                <button
-                                    onClick={saveQuestions}
-                                    className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 flex items-center"
-                                >
-                                    <Save className="w-5 h-5 mr-2" />
-                                    Save & Assign
-                                </button>
-                            )}
                         </div>
                     </div>
                 </div>
