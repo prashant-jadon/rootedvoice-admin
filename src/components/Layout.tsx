@@ -15,6 +15,7 @@ import {
   MessageCircle,
   BarChart3,
   FileText,
+  Library,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Clients', href: '/clients', icon: UserCircle },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: TrendingUp },
+  { name: 'Resources', href: '/resources', icon: Library },
   { name: 'Support Chat', href: '/support-chat', icon: MessageCircle },
   { name: 'Eval Feedback', href: '/evaluation-feedback', icon: FileText },
   { name: 'Pricing', href: '/pricing', icon: DollarSign },
