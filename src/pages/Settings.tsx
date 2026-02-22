@@ -110,11 +110,10 @@ export default function Settings() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -132,7 +131,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Platform Name</label>
                 <input
                   type="text"
-                  value={settings.general.platformName}
+                  value={settings?.general?.platformName || ''}
                   onChange={(e) => updateSetting('general', 'platformName', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -141,7 +140,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Support Email</label>
                 <input
                   type="email"
-                  value={settings.general.supportEmail}
+                  value={settings?.general?.supportEmail || ''}
                   onChange={(e) => updateSetting('general', 'supportEmail', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -150,7 +149,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Support Phone</label>
                 <input
                   type="tel"
-                  value={settings.general.supportPhone}
+                  value={settings?.general?.supportPhone || ''}
                   onChange={(e) => updateSetting('general', 'supportPhone', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -158,7 +157,7 @@ export default function Settings() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
                 <select
-                  value={settings.general.timezone}
+                  value={settings?.general?.timezone || 'UTC'}
                   onChange={(e) => updateSetting('general', 'timezone', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 >
@@ -182,7 +181,7 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.notifications.emailEnabled}
+                  checked={!!settings?.notifications?.emailEnabled}
                   onChange={(e) => updateSetting('notifications', 'emailEnabled', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
@@ -194,7 +193,7 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.notifications.smsEnabled}
+                  checked={!!settings?.notifications?.smsEnabled}
                   onChange={(e) => updateSetting('notifications', 'smsEnabled', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
@@ -206,7 +205,7 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.notifications.pushEnabled}
+                  checked={!!settings?.notifications?.pushEnabled}
                   onChange={(e) => updateSetting('notifications', 'pushEnabled', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
@@ -218,7 +217,7 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.notifications.adminNotifications}
+                  checked={!!settings?.notifications?.adminNotifications}
                   onChange={(e) => updateSetting('notifications', 'adminNotifications', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
@@ -233,7 +232,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
                 <input
                   type="number"
-                  value={settings.security.sessionTimeout}
+                  value={settings?.security?.sessionTimeout || 0}
                   onChange={(e) => updateSetting('security', 'sessionTimeout', parseInt(e.target.value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -245,7 +244,7 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.security.require2FA}
+                  checked={!!settings?.security?.require2FA}
                   onChange={(e) => updateSetting('security', 'require2FA', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
@@ -254,7 +253,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Password Length</label>
                 <input
                   type="number"
-                  value={settings.security.passwordMinLength}
+                  value={settings?.security?.passwordMinLength || 8}
                   onChange={(e) => updateSetting('security', 'passwordMinLength', parseInt(e.target.value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -263,7 +262,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
                 <input
                   type="number"
-                  value={settings.security.maxLoginAttempts}
+                  value={settings?.security?.maxLoginAttempts || 5}
                   onChange={(e) => updateSetting('security', 'maxLoginAttempts', parseInt(e.target.value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -281,17 +280,17 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.integrations.stripeEnabled}
+                  checked={!!settings?.integrations?.stripeEnabled}
                   onChange={(e) => updateSetting('integrations', 'stripeEnabled', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
               </div>
-              {settings.integrations.stripeEnabled && (
+              {settings?.integrations?.stripeEnabled && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Stripe Public Key</label>
                   <input
                     type="text"
-                    value={settings.integrations.stripePublicKey}
+                    value={settings.integrations.stripePublicKey || ''}
                     onChange={(e) => updateSetting('integrations', 'stripePublicKey', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="pk_live_..."
@@ -305,17 +304,17 @@ export default function Settings() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={settings.integrations.twilioEnabled}
+                  checked={!!settings?.integrations?.twilioEnabled}
                   onChange={(e) => updateSetting('integrations', 'twilioEnabled', e.target.checked)}
                   className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
                 />
               </div>
-              {settings.integrations.twilioEnabled && (
+              {settings?.integrations?.twilioEnabled && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Twilio Account SID</label>
                   <input
                     type="text"
-                    value={settings.integrations.twilioAccountSid}
+                    value={settings.integrations.twilioAccountSid || ''}
                     onChange={(e) => updateSetting('integrations', 'twilioAccountSid', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="AC..."

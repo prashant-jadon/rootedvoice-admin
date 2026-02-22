@@ -44,7 +44,7 @@ export default function Reports() {
       const params: any = { range: dateRange };
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
-      
+
       const response = await adminAPI.getReports(params);
       setReportData(response.data.data);
     } catch (error) {
@@ -56,7 +56,7 @@ export default function Reports() {
 
   const exportReport = (format: 'csv' | 'pdf') => {
     if (!reportData) return;
-    
+
     if (format === 'csv') {
       const csv = [
         ['Metric', 'Value'].join(','),
@@ -144,11 +144,11 @@ export default function Reports() {
             <DollarSign className="w-5 h-5 text-green-500" />
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            ${(reportData.revenue.total / 100).toFixed(2)}
+            ${(reportData.revenue?.total / 100 || 0).toFixed(2)}
           </p>
           <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
             <TrendingUp className="w-4 h-4" />
-            {reportData.revenue.growth > 0 ? '+' : ''}{reportData.revenue.growth.toFixed(1)}% vs last month
+            {(reportData.revenue?.growth || 0) > 0 ? '+' : ''}{(reportData.revenue?.growth || 0).toFixed(1)}% vs last month
           </p>
         </div>
 
@@ -158,10 +158,10 @@ export default function Reports() {
             <Calendar className="w-5 h-5 text-blue-500" />
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            ${(reportData.revenue.thisMonth / 100).toFixed(2)}
+            ${(reportData.revenue?.thisMonth / 100 || 0).toFixed(2)}
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            {((reportData.revenue.thisMonth / reportData.revenue.total) * 100).toFixed(1)}% of total
+            {(((reportData.revenue?.thisMonth || 0) / (reportData.revenue?.total || 1)) * 100).toFixed(1)}% of total
           </p>
         </div>
 
@@ -170,9 +170,9 @@ export default function Reports() {
             <h3 className="text-sm font-medium text-gray-600">Total Sessions</h3>
             <BarChart3 className="w-5 h-5 text-purple-500" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{reportData.sessions.total}</p>
+          <p className="text-2xl font-bold text-gray-900">{reportData.sessions?.total || 0}</p>
           <p className="text-sm text-gray-500 mt-2">
-            {reportData.sessions.averagePerDay.toFixed(1)} avg/day
+            {(reportData.sessions?.averagePerDay || 0).toFixed(1)} avg/day
           </p>
         </div>
 
@@ -181,9 +181,9 @@ export default function Reports() {
             <h3 className="text-sm font-medium text-gray-600">Active Users</h3>
             <Users className="w-5 h-5 text-indigo-500" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{reportData.users.active}</p>
+          <p className="text-2xl font-bold text-gray-900">{reportData.users?.active || 0}</p>
           <p className="text-sm text-gray-500 mt-2">
-            {reportData.users.newThisMonth} new this month
+            {reportData.users?.newThisMonth || 0} new this month
           </p>
         </div>
       </div>
@@ -197,13 +197,13 @@ export default function Reports() {
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-600">Completed</span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {reportData.sessions.completed} ({((reportData.sessions.completed / reportData.sessions.total) * 100).toFixed(1)}%)
+                  {reportData.sessions?.completed || 0} ({(((reportData.sessions?.completed || 0) / (reportData.sessions?.total || 1)) * 100).toFixed(1)}%)
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-green-500 h-2 rounded-full"
-                  style={{ width: `${(reportData.sessions.completed / reportData.sessions.total) * 100}%` }}
+                  style={{ width: `${((reportData.sessions?.completed || 0) / (reportData.sessions?.total || 1)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -211,13 +211,13 @@ export default function Reports() {
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-600">Cancelled</span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {reportData.sessions.cancelled} ({((reportData.sessions.cancelled / reportData.sessions.total) * 100).toFixed(1)}%)
+                  {reportData.sessions?.cancelled || 0} ({(((reportData.sessions?.cancelled || 0) / (reportData.sessions?.total || 1)) * 100).toFixed(1)}%)
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-red-500 h-2 rounded-full"
-                  style={{ width: `${(reportData.sessions.cancelled / reportData.sessions.total) * 100}%` }}
+                  style={{ width: `${((reportData.sessions?.cancelled || 0) / (reportData.sessions?.total || 1)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function Reports() {
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Subscription Distribution</h2>
           <div className="space-y-3">
-            {Object.entries(reportData.subscriptionDistribution).map(([tier, count]) => (
+            {(reportData.subscriptionDistribution ? Object.entries(reportData.subscriptionDistribution) : []).map(([tier, count]) => (
               <div key={tier}>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium text-gray-700 capitalize">{tier}</span>
@@ -238,7 +238,7 @@ export default function Reports() {
                   <div
                     className="bg-indigo-500 h-2 rounded-full"
                     style={{
-                      width: `${(count / reportData.users.total) * 100}%`,
+                      width: `${(count / (reportData.users?.total || 1)) * 100}%`,
                     }}
                   ></div>
                 </div>
@@ -262,7 +262,7 @@ export default function Reports() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {reportData.topTherapists.map((therapist, index) => (
+              {(reportData.topTherapists || []).map((therapist, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-lg font-bold text-indigo-600">#{index + 1}</span>

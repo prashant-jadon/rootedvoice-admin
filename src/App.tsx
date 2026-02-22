@@ -17,7 +17,8 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import SupportChat from './pages/SupportChat';
 import PlatformStats from './pages/PlatformStats';
-import Evaluations from './pages/Evaluations';
+import EvaluationFeedback from './pages/EvaluationFeedback';
+import Calendar from './pages/Calendar';
 
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -151,6 +152,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/calendar"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Calendar />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/reports"
         element={
           <ProtectedRoute>
@@ -191,11 +202,11 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/evaluations"
+        path="/evaluation-feedback"
         element={
           <ProtectedRoute>
             <Layout>
-              <Evaluations />
+              <EvaluationFeedback />
             </Layout>
           </ProtectedRoute>
         }

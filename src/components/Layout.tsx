@@ -27,7 +27,7 @@ const navigation = [
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: TrendingUp },
   { name: 'Support Chat', href: '/support-chat', icon: MessageCircle },
-  { name: 'Evaluations', href: '/evaluations', icon: FileText },
+  { name: 'Eval Feedback', href: '/evaluation-feedback', icon: FileText },
   { name: 'Pricing', href: '/pricing', icon: DollarSign },
   { name: 'Payment Split', href: '/payment-split', icon: Settings },
   { name: 'Rate Caps', href: '/rate-caps', icon: TrendingUp },
