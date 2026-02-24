@@ -30,7 +30,13 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
   if (!url) return null;
   const proxiedUrl = getBlobProxyUrl(url);
 
-  if (isImageUrl(url)) {
+  // For blob URLs, we can't reliably detect filetype from extension.
+  // Try to render as image; if it fails, the onError handler shows a Download link.
+  const isBlobUrl = url.includes('blob.vercel-storage.com');
+  const shouldTryImage = isBlobUrl || isImageUrl(url);
+  const shouldShowPdf = !isBlobUrl && isPdfUrl(url);
+
+  if (shouldTryImage) {
     return (
       <div className="mt-2 mb-2">
         <div
@@ -42,14 +48,14 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
             alt="Document"
             className="max-w-full max-h-48 object-contain rounded-lg"
             onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+              // If image fails (e.g. it's a PDF), hide the image and show fallback link
+              const img = e.target as HTMLImageElement;
+              const parent = img.closest('.mt-2.mb-2');
+              if (parent) {
+                parent.innerHTML = `<a href="${proxiedUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;color:#2563eb;font-size:14px;text-decoration:none;">📄 View / Download Document</a>`;
+              }
             }}
           />
-          <div className="hidden items-center justify-center p-4 bg-gray-50 rounded-lg">
-            <FileText className="w-8 h-8 text-gray-400" />
-            <span className="ml-2 text-sm text-gray-500">Unable to load preview</span>
-          </div>
           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
             <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
           </div>
@@ -61,7 +67,7 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
     );
   }
 
-  if (isPdfUrl(url)) {
+  if (shouldShowPdf) {
     return (
       <div className="mt-2 mb-2">
         <a href={proxiedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-blue-600 hover:bg-gray-100 text-sm transition-colors">
