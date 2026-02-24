@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
 import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+// Convert private Vercel Blob URLs to go through our authenticated proxy
+const getBlobProxyUrl = (url: string): string => {
+  if (!url) return url;
+  if (url.includes('blob.vercel-storage.com')) {
+    return `${API_BASE_URL}/blob/proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 // Helper to detect if a URL is an image
 const isImageUrl = (url: string): boolean => {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
@@ -17,16 +28,17 @@ const isPdfUrl = (url: string): boolean => {
 // Reusable document preview component
 const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (url: string) => void }) => {
   if (!url) return null;
+  const proxiedUrl = getBlobProxyUrl(url);
 
   if (isImageUrl(url)) {
     return (
       <div className="mt-2 mb-2">
         <div
           className="relative group cursor-pointer inline-block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-          onClick={() => onImageClick?.(url)}
+          onClick={() => onImageClick?.(proxiedUrl)}
         >
           <img
-            src={url}
+            src={proxiedUrl}
             alt="Document"
             className="max-w-full max-h-48 object-contain rounded-lg"
             onError={(e) => {
@@ -42,7 +54,7 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
             <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
           </div>
         </div>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs mt-1">
+        <a href={proxiedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs mt-1">
           <Download className="w-3 h-3" /> Open full size
         </a>
       </div>
@@ -52,15 +64,10 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
   if (isPdfUrl(url)) {
     return (
       <div className="mt-2 mb-2">
-        <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-          <iframe
-            src={url}
-            title="PDF Document"
-            className="w-full h-64 border-0"
-          />
-        </div>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs mt-1">
-          <Download className="w-3 h-3" /> Open in new tab
+        <a href={proxiedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-blue-600 hover:bg-gray-100 text-sm transition-colors">
+          <FileText className="w-4 h-4" />
+          View PDF Document
+          <Download className="w-3 h-3" />
         </a>
       </div>
     );
@@ -69,7 +76,7 @@ const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (u
   // Fallback for other file types
   return (
     <div className="mt-2 mb-2">
-      <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-blue-600 hover:bg-gray-100 text-sm transition-colors">
+      <a href={proxiedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-blue-600 hover:bg-gray-100 text-sm transition-colors">
         <FileText className="w-4 h-4" />
         View Document
         <Download className="w-3 h-3" />

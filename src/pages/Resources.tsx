@@ -255,7 +255,13 @@ export default function Resources() {
                                                 </button>
                                             )}
                                             <a
-                                                href={resource.fileUrl?.startsWith('http') ? resource.fileUrl : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${resource.fileUrl}`}
+                                                href={(() => {
+                                                    const rawUrl = resource.fileUrl?.startsWith('http') ? resource.fileUrl : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${resource.fileUrl}`;
+                                                    if (rawUrl.includes('blob.vercel-storage.com')) {
+                                                        return `${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/blob/proxy?url=${encodeURIComponent(rawUrl)}`;
+                                                    }
+                                                    return rawUrl;
+                                                })()}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="text-blue-600 hover:text-blue-900"
