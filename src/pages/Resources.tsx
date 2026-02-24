@@ -255,7 +255,7 @@ export default function Resources() {
                                                 </button>
                                             )}
                                             <a
-                                                href={`http://localhost:5001${resource.fileUrl}`}
+                                                href={resource.fileUrl?.startsWith('http') ? resource.fileUrl : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${resource.fileUrl}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="text-blue-600 hover:text-blue-900"
