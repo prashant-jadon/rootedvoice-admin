@@ -1,6 +1,82 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle } from 'lucide-react';
+import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose } from 'lucide-react';
+
+// Helper to detect if a URL is an image
+const isImageUrl = (url: string): boolean => {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+  const lowerUrl = url.toLowerCase().split('?')[0]; // strip query params
+  return imageExtensions.some(ext => lowerUrl.endsWith(ext));
+};
+
+// Helper to detect if a URL is a PDF
+const isPdfUrl = (url: string): boolean => {
+  return url.toLowerCase().split('?')[0].endsWith('.pdf');
+};
+
+// Reusable document preview component
+const DocumentPreview = ({ url, onImageClick }: { url: string; onImageClick?: (url: string) => void }) => {
+  if (!url) return null;
+
+  if (isImageUrl(url)) {
+    return (
+      <div className="mt-2 mb-2">
+        <div
+          className="relative group cursor-pointer inline-block border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+          onClick={() => onImageClick?.(url)}
+        >
+          <img
+            src={url}
+            alt="Document"
+            className="max-w-full max-h-48 object-contain rounded-lg"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+            }}
+          />
+          <div className="hidden items-center justify-center p-4 bg-gray-50 rounded-lg">
+            <FileText className="w-8 h-8 text-gray-400" />
+            <span className="ml-2 text-sm text-gray-500">Unable to load preview</span>
+          </div>
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+            <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
+        </div>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs mt-1">
+          <Download className="w-3 h-3" /> Open full size
+        </a>
+      </div>
+    );
+  }
+
+  if (isPdfUrl(url)) {
+    return (
+      <div className="mt-2 mb-2">
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+          <iframe
+            src={url}
+            title="PDF Document"
+            className="w-full h-64 border-0"
+          />
+        </div>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-xs mt-1">
+          <Download className="w-3 h-3" /> Open in new tab
+        </a>
+      </div>
+    );
+  }
+
+  // Fallback for other file types
+  return (
+    <div className="mt-2 mb-2">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-blue-600 hover:bg-gray-100 text-sm transition-colors">
+        <FileText className="w-4 h-4" />
+        View Document
+        <Download className="w-3 h-3" />
+      </a>
+    </div>
+  );
+};
 
 interface Therapist {
   _id: string;
@@ -132,6 +208,7 @@ export default function Therapists() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
   const [statusReason, setStatusReason] = useState('');
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTherapists();
@@ -600,11 +677,7 @@ export default function Therapists() {
                         <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.ashaCertification.expirationDate).toLocaleDateString()}</span></div>
                       )}
                       {selectedTherapist.complianceDocuments.ashaCertification.documentUrl && (
-                        <div>
-                          <a href={selectedTherapist.complianceDocuments.ashaCertification.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                            View Document
-                          </a>
-                        </div>
+                        <DocumentPreview url={selectedTherapist.complianceDocuments.ashaCertification.documentUrl} onImageClick={setLightboxImage} />
                       )}
                     </div>
                   )}
@@ -655,11 +728,7 @@ export default function Therapists() {
                             <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(license.expirationDate).toLocaleDateString()}</span></div>
                           )}
                           {license.documentUrl && (
-                            <div>
-                              <a href={license.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                                View Document
-                              </a>
-                            </div>
+                            <DocumentPreview url={license.documentUrl} onImageClick={setLightboxImage} />
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -706,11 +775,7 @@ export default function Therapists() {
                         <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.stateLicensure.expirationDate).toLocaleDateString()}</span></div>
                       )}
                       {selectedTherapist.complianceDocuments.stateLicensure.documentUrl && (
-                        <div>
-                          <a href={selectedTherapist.complianceDocuments.stateLicensure.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                            View Document
-                          </a>
-                        </div>
+                        <DocumentPreview url={selectedTherapist.complianceDocuments.stateLicensure.documentUrl} onImageClick={setLightboxImage} />
                       )}
                     </div>
                   )}
@@ -758,11 +823,7 @@ export default function Therapists() {
                         <div><span className="text-gray-600">Supervising State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.supervision.supervisingState}</span></div>
                       )}
                       {selectedTherapist.complianceDocuments.supervision.agreementDocumentUrl && (
-                        <div>
-                          <a href={selectedTherapist.complianceDocuments.supervision.agreementDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                            View Supervision Agreement
-                          </a>
-                        </div>
+                        <DocumentPreview url={selectedTherapist.complianceDocuments.supervision.agreementDocumentUrl} onImageClick={setLightboxImage} />
                       )}
                     </div>
                   )}
@@ -812,11 +873,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.professionalLiabilityInsurance.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.professionalLiabilityInsurance.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.professionalLiabilityInsurance.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.professionalLiabilityInsurance.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -862,11 +919,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.backgroundCheck.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.backgroundCheck.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.backgroundCheck.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.backgroundCheck.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -917,11 +970,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.spaMembership.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.spaMembership.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.spaMembership.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.spaMembership.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -967,11 +1016,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.stateRegistration.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.stateRegistration.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.stateRegistration.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.stateRegistration.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -1020,11 +1065,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.professionalIndemnityInsurance.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.professionalIndemnityInsurance.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.professionalIndemnityInsurance.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.professionalIndemnityInsurance.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -1070,11 +1111,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.workingWithChildrenCheck.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.workingWithChildrenCheck.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.workingWithChildrenCheck.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.workingWithChildrenCheck.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -1120,11 +1157,7 @@ export default function Therapists() {
                       <div><span className="text-gray-600">Expiration:</span> <span className="font-medium">{new Date(selectedTherapist.complianceDocuments.policeCheck.expirationDate).toLocaleDateString()}</span></div>
                     )}
                     {selectedTherapist.complianceDocuments.policeCheck.documentUrl && (
-                      <div>
-                        <a href={selectedTherapist.complianceDocuments.policeCheck.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                          View Document
-                        </a>
-                      </div>
+                      <DocumentPreview url={selectedTherapist.complianceDocuments.policeCheck.documentUrl} onImageClick={setLightboxImage} />
                     )}
                   </div>
                 )}
@@ -1168,11 +1201,7 @@ export default function Therapists() {
                             <div><span className="text-gray-600">State:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.stateLicense.state}</span></div>
                           )}
                           {selectedTherapist.complianceDocuments.stateLicense.documentUrl && (
-                            <div>
-                              <a href={selectedTherapist.complianceDocuments.stateLicense.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                                View Document
-                              </a>
-                            </div>
+                            <DocumentPreview url={selectedTherapist.complianceDocuments.stateLicense.documentUrl} onImageClick={setLightboxImage} />
                           )}
                         </div>
                       )}
@@ -1214,11 +1243,7 @@ export default function Therapists() {
                             <div><span className="text-gray-600">Policy #:</span> <span className="font-medium">{selectedTherapist.complianceDocuments.liabilityInsurance.policyNumber}</span></div>
                           )}
                           {selectedTherapist.complianceDocuments.liabilityInsurance.documentUrl && (
-                            <div>
-                              <a href={selectedTherapist.complianceDocuments.liabilityInsurance.documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                                View Document
-                              </a>
-                            </div>
+                            <DocumentPreview url={selectedTherapist.complianceDocuments.liabilityInsurance.documentUrl} onImageClick={setLightboxImage} />
                           )}
                         </div>
                       )}
@@ -1261,6 +1286,37 @@ export default function Therapists() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+          >
+            <XClose className="w-8 h-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Document full view"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <a
+            href={lightboxImage}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-6 bg-white text-gray-800 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg text-sm font-medium"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-4 h-4" />
+            Open Original
+          </a>
         </div>
       )}
     </div>
