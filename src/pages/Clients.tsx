@@ -42,9 +42,16 @@ export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [intakeFilter, setIntakeFilter] = useState<'all' | 'completed' | 'pending'>('all');
+  const [intakeFilter, setIntakeFilter] = useState<'all' | 'completed' | 'pending' | 'incomplete'>('all');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showIntakeModal, setShowIntakeModal] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+
+  const getDropOffStep = (client: any) => {
+    if (!client.intake?.intakeCompleted) return 'Questionnaire Pending';
+    if (!client.hasCompletedEvaluation && !client.hasPaidEvaluationFee) return 'Pending Evaluation Booking';
+    return 'Onboarding Complete';
+  };
 
   useEffect(() => {
     fetchClients();
@@ -64,6 +71,8 @@ export default function Clients() {
         clientsData = clientsData.filter((client: Client) => client.intake?.intakeCompleted === true);
       } else if (intakeFilter === 'pending') {
         clientsData = clientsData.filter((client: Client) => !client.intake?.intakeCompleted);
+      } else if (intakeFilter === 'incomplete') {
+        clientsData = clientsData.filter((client: any) => !client.intake?.intakeCompleted || (!client.hasCompletedEvaluation && !client.hasPaidEvaluationFee));
       }
       
       setClients(clientsData);
@@ -71,6 +80,19 @@ export default function Clients() {
       console.error('Failed to fetch clients:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendReminder = async (clientId: string) => {
+    try {
+      setSendingReminder(clientId);
+      await adminAPI.sendOnboardingReminder(clientId);
+      alert('Reminder email sent successfully.');
+    } catch (error) {
+      console.error('Failed to send reminder:', error);
+      alert('Failed to send reminder email. Please try again.');
+    } finally {
+      setSendingReminder(null);
     }
   };
 
@@ -132,12 +154,13 @@ export default function Clients() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Intake Status</label>
               <select
                 value={intakeFilter}
-                onChange={(e) => setIntakeFilter(e.target.value as 'all' | 'completed' | 'pending')}
+                onChange={(e) => setIntakeFilter(e.target.value as any)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="all">All Clients</option>
                 <option value="completed">Intake Completed</option>
-                <option value="pending">Intake Pending</option>
+                <option value="pending">Questionnaire Pending</option>
+                <option value="incomplete">Incomplete Onboarding (Escalation)</option>
               </select>
             </div>
           </div>
@@ -210,14 +233,20 @@ export default function Clients() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {client.intake?.intakeCompleted ? (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <CheckCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">Completed</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">Completed</span>
+                        </div>
+                        <span className="text-xs text-gray-500">{getDropOffStep(client)}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 text-yellow-600">
-                        <XCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">Pending</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-yellow-600">
+                          <XCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">Pending</span>
+                        </div>
+                        <span className="text-xs text-red-500 font-medium">{getDropOffStep(client)}</span>
                       </div>
                     )}
                   </td>
@@ -228,16 +257,29 @@ export default function Clients() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => {
-                        setSelectedClient(client);
-                        setShowIntakeModal(true);
-                      }}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>View Intake</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedClient(client);
+                          setShowIntakeModal(true);
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View Intake</span>
+                      </button>
+                      
+                      {getDropOffStep(client) !== 'Onboarding Complete' && (
+                        <button
+                          onClick={() => handleSendReminder(client._id)}
+                          disabled={sendingReminder === client._id}
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-orange-100 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-200 transition-colors disabled:opacity-50"
+                        >
+                          <Mail className="w-4 h-4" />
+                          <span>{sendingReminder === client._id ? 'Sending...' : 'Send Reminder'}</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

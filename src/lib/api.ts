@@ -9,12 +9,27 @@ const api = axios.create({
   },
 });
 
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift();
+  return null;
+}
+
 // Request interceptor to add JWT token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('admin_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const googtrans = getCookie('googtrans');
+    if (googtrans) {
+      const langCode = googtrans.split('/').pop();
+      if (langCode) {
+        config.headers['Accept-Language'] = langCode;
+      }
     }
     return config;
   },
@@ -55,9 +70,17 @@ export const adminAPI = {
   // Therapists
   getTherapists: (params?: any) => api.get('/admin/therapists', { params }),
 
+  // Action Logs
+  getActionLogs: (params?: any) => api.get('/admin/action-logs', { params }),
+
+  // Inquiries
+  getInquiries: () => api.get('/admin/inquiries'),
+  updateInquiryStatus: (id: string, status: string) => api.put(`/admin/inquiries/${id}/status`, { status }),
+
   // Clients
   getClients: (params?: any) => api.get('/admin/clients', { params }),
-  getClientById: (id: string) => api.get(`/admin/clients/${id}`),
+  getClientDetails: (id: string) => api.get(`/admin/clients/${id}`),
+  sendOnboardingReminder: (id: string) => api.post(`/admin/clients/${id}/reminder`),
 
   // Payments
   getPayments: (params?: any) => api.get('/admin/payments', { params }),

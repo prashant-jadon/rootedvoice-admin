@@ -11,11 +11,12 @@ import {
   Menu,
   X,
   TrendingUp,
-  Calendar,
   MessageCircle,
   BarChart3,
   FileText,
   Library,
+  MessageSquare,
+  CreditCard,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,7 +26,8 @@ const navigation = [
   { name: 'Therapists', href: '/therapists', icon: UserCheck },
   { name: 'Therapist Earnings', href: '/therapists/earnings', icon: DollarSign },
   { name: 'Clients', href: '/clients', icon: UserCircle },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
+  { name: 'Inquiries', href: '/inquiries', icon: MessageSquare },
+  { name: 'Payments', href: '/payments', icon: CreditCard },
   { name: 'Reports', href: '/reports', icon: TrendingUp },
   { name: 'Resources', href: '/resources', icon: Library },
   { name: 'Support Chat', href: '/support-chat', icon: MessageCircle },

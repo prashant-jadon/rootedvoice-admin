@@ -15,6 +15,7 @@ import RateCaps from './pages/RateCaps';
 import Sessions from './pages/Sessions';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Inquiries from './pages/Inquiries';
 import SupportChat from './pages/SupportChat';
 import PlatformStats from './pages/PlatformStats';
 import EvaluationFeedback from './pages/EvaluationFeedback';
@@ -98,6 +99,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <Clients />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inquiries"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Inquiries />
             </Layout>
           </ProtectedRoute>
         }

@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../lib/api';
-import { Users, UserCheck, UserCircle, CreditCard, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, UserCircle, CreditCard, DollarSign, TrendingUp, AlertCircle, Calendar } from 'lucide-react';
 
 interface Stats {
   users: {
     total: number;
     therapists: number;
     clients: number;
+    pendingClients: number;
   };
   sessions: {
     total: number;
+    upcoming: number;
+    missedEvaluations: number;
   };
   subscriptions: {
     active: number;
@@ -86,6 +89,24 @@ export default function Dashboard() {
       value: `$${((stats?.payments.revenue.thisMonth || 0) / 100).toFixed(2)}`,
       icon: TrendingUp,
       color: 'bg-emerald-500',
+    },
+    {
+      name: 'Pending Clients',
+      value: stats?.users.pendingClients || 0,
+      icon: UserCircle,
+      color: 'bg-orange-500',
+    },
+    {
+      name: 'Upcoming Sessions',
+      value: stats?.sessions.upcoming || 0,
+      icon: Calendar,
+      color: 'bg-indigo-400',
+    },
+    {
+      name: 'Missed Evaluations',
+      value: stats?.sessions.missedEvaluations || 0,
+      icon: AlertCircle,
+      color: 'bg-red-500',
     },
   ];
 

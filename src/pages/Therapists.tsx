@@ -108,6 +108,14 @@ interface Therapist {
   credentials?: 'SLP' | 'SLPA';
   canSupervise?: boolean;
   isVerified?: boolean;
+  onboardingStage?: number;
+  onboardingStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  complianceItems?: {
+    icaSigned?: boolean;
+    hipaaSigned?: boolean;
+    w9Signed?: boolean;
+    orientationAcknowledged?: boolean;
+  };
   complianceDocuments?: {
     // US-based fields (primary)
     ashaCertification?: {
@@ -475,15 +483,25 @@ export default function Therapists() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {therapist.complianceDocuments?.stateLicense?.verified && therapist.complianceDocuments?.liabilityInsurance?.verified ? (
-                        <span className="text-green-600 flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4" />
-                          Verified
+                      {therapist.onboardingStage === 1 ? (
+                        <span className="text-yellow-600 flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded-full border border-yellow-200">
+                          <AlertCircle className="w-3 h-3" />
+                          Stage 1: Profile
+                        </span>
+                      ) : therapist.onboardingStage === 2 ? (
+                        <span className="text-orange-600 flex items-center gap-1 text-xs bg-orange-50 px-2 py-1 rounded-full border border-orange-200">
+                          <Clock className="w-3 h-3" />
+                          Stage 2: Docs Pending Review
+                        </span>
+                      ) : therapist.onboardingStage === 3 && !therapist.complianceItems?.icaSigned ? (
+                        <span className="text-blue-600 flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded-full border border-blue-200">
+                          <AlertCircle className="w-3 h-3" />
+                          Stage 3: ICA Required
                         </span>
                       ) : (
-                        <span className="text-yellow-600 flex items-center gap-1">
-                          <AlertCircle className="w-4 h-4" />
-                          Pending
+                        <span className="text-green-600 flex items-center gap-1 text-xs bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                          <CheckCircle className="w-3 h-3" />
+                          Fully Approved
                         </span>
                       )}
                     </div>
