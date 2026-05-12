@@ -34,19 +34,36 @@ interface Evaluation {
 
 const EvaluationFeedback = () => {
     const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+    const [pricingTiers, setPricingTiers] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        fetchEvaluations();
+        fetchData();
     }, []);
 
     const getToken = () => localStorage.getItem('admin_token');
 
-    const fetchEvaluations = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
             const token = getToken();
+            
+            // Fetch pricing tiers for mapping
+            let tiersMap: Record<string, string> = {};
+            try {
+                const tiersRes = await axios.get(`${API_URL}/subscriptions/pricing`);
+                if (tiersRes.data?.success && tiersRes.data?.data) {
+                    const data = tiersRes.data.data;
+                    Object.keys(data).forEach(key => {
+                        tiersMap[key] = data[key].name;
+                    });
+                }
+                setPricingTiers(tiersMap);
+            } catch (err) {
+                console.error('Error fetching pricing tiers:', err);
+            }
+
             const response = await axios.get(`${API_URL}/evaluations`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -146,7 +163,7 @@ const EvaluationFeedback = () => {
                                                     <td className="px-6 py-4 text-gray-600 align-top">
                                                         {evaluation.recommendations?.subscriptionTier ? (
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize border border-blue-200">
-                                                                {evaluation.recommendations.subscriptionTier}
+                                                                {pricingTiers[evaluation.recommendations.subscriptionTier] || evaluation.recommendations.subscriptionTier}
                                                             </span>
                                                         ) : (
                                                             <span className="text-gray-400 italic">None</span>
