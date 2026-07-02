@@ -1,3 +1,11 @@
+import { useState } from 'react';
+
+const SignatureImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <span className="text-gray-500 italic text-xs">Signature on file</span>;
+  return <img src={src} alt={alt} className="max-h-12 object-contain" onError={() => setFailed(true)} />;
+};
+
 interface ICAContentProps {
   signedData?: {
     effectiveDate?: string;
@@ -271,25 +279,6 @@ export default function ICAContent({ signedData }: ICAContentProps = {}) {
       <h3 className="text-lg font-bold text-black mt-6 mb-2">ARTICLE 21 &ndash; EXHIBITS</h3>
       <p className="mb-4">The following Exhibits are incorporated into and made part of this Agreement.</p>
 
-      {/* SIGNATURE BLOCK */}
-      <div className="border-t border-gray-300 pt-6 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <p className="font-bold text-black mb-4">ROOTED VOICES SPEECH &amp; LANGUAGE THERAPY, LLC</p>
-            <p className="mb-1">By: _______________________________</p>
-            <p className="mb-1">Name: ____________________________</p>
-            <p className="mb-1">Title: _____________________________</p>
-          </div>
-          <div>
-            <p className="font-bold text-black mb-4">CONTRACTOR</p>
-            <p className="mb-1">By: _______________________________</p>
-            <p className="mb-1">Printed Name: ______________________</p>
-            <p className="mb-1">Signature: _________________________</p>
-            <p className="mb-1">Date: ______________________________</p>
-          </div>
-        </div>
-      </div>
-
       {/* EXHIBIT A */}
       <h3 className="text-lg font-bold text-black mt-8 mb-2 border-t-2 border-black pt-6">EXHIBIT A &ndash; SCOPE OF SERVICES</h3>
       <p className="mb-2 italic">Exhibit A outlines the scope of services to be performed by Contractor.</p>
@@ -418,7 +407,7 @@ export default function ICAContent({ signedData }: ICAContentProps = {}) {
             <div className="flex items-end gap-2">
               <span className="text-gray-700 w-20 shrink-0">By:</span>
               {s?.companySignatureUrl ? (
-                <img src={s.companySignatureUrl} alt="Company signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <SignatureImage src={s.companySignatureUrl} alt="Company signature" />
               ) : (
                 <span className="flex-1 border-b border-gray-400" />
               )}
@@ -446,7 +435,7 @@ export default function ICAContent({ signedData }: ICAContentProps = {}) {
             <div className="flex items-end gap-2">
               <span className="text-gray-700 w-20 shrink-0">By:</span>
               {s?.contractorSignatureUrl ? (
-                <img src={s.contractorSignatureUrl} alt="Contractor signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <SignatureImage src={s.contractorSignatureUrl} alt="Contractor signature" />
               ) : (
                 <span className="flex-1 border-b border-gray-400" />
               )}
@@ -458,7 +447,7 @@ export default function ICAContent({ signedData }: ICAContentProps = {}) {
             <div className="flex items-end gap-2">
               <span className="text-gray-700 w-20 shrink-0">Signature:</span>
               {s?.contractorSignatureUrl ? (
-                <img src={s.contractorSignatureUrl} alt="Contractor signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <SignatureImage src={s.contractorSignatureUrl} alt="Contractor signature" />
               ) : (
                 <span className="flex-1 border-b border-gray-400" />
               )}
