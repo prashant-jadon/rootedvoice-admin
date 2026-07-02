@@ -1450,11 +1450,7 @@ export default function Therapists() {
             {selectedTherapist.complianceItems?.icaContractorSignatureUrl && (
               <div className="mb-5 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <p className="text-xs font-medium text-gray-600 mb-2">Contractor&apos;s Signature</p>
-                <img
-                  src={getBlobProxyUrl(selectedTherapist.complianceItems.icaContractorSignatureUrl)}
-                  alt="Contractor signature"
-                  className="max-h-20 object-contain"
-                />
+                <DocumentPreview url={selectedTherapist.complianceItems.icaContractorSignatureUrl} onImageClick={setLightboxImage} />
                 {selectedTherapist.complianceItems?.icaContractorAddress && (
                   <p className="text-xs text-gray-500 mt-2">Address: {selectedTherapist.complianceItems.icaContractorAddress}</p>
                 )}
