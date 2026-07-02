@@ -1,9 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const SignatureImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let revoke = '';
+    fetch(src)
+      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.blob(); })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        revoke = url;
+        setBlobUrl(url);
+      })
+      .catch((err) => { console.error('Signature load failed:', src, err); setFailed(true); });
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [src]);
+
   if (failed) return <span className="text-gray-500 italic text-xs">Signature on file</span>;
-  return <img src={src} alt={alt} className="max-h-12 object-contain" onError={() => setFailed(true)} />;
+  if (!blobUrl) return <span className="text-gray-400 text-xs">Loading...</span>;
+  return <img src={blobUrl} alt={alt} className="max-h-12 object-contain" />;
 };
 
 interface ICAContentProps {
