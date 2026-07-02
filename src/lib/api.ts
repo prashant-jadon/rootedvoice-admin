@@ -141,6 +141,10 @@ export const adminAPI = {
   getIncompleteTherapistProfiles: () =>
     api.get('/admin/therapists/incomplete'),
 
+  // ICA Countersign
+  countersignIca: (therapistId: string, data: { signerName: string; signerTitle: string; signatureDataUrl: string }) =>
+    api.put(`/admin/therapists/${therapistId}/countersign-ica`, data),
+
   // Platform Stats
   getPlatformStats: () => api.get('/admin/platform-stats'),
   updatePlatformStats: (data: any) => api.put('/admin/platform-stats', data),

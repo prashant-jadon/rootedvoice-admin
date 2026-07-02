@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose } from 'lucide-react';
+import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose, PenTool, Trash2 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -112,6 +112,13 @@ interface Therapist {
   onboardingStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   complianceItems?: {
     icaSigned?: boolean;
+    icaSignedAt?: string;
+    icaContractorAddress?: string;
+    icaContractorSignatureUrl?: string;
+    icaCountersigned?: boolean;
+    icaCountersignedAt?: string;
+    icaCompanySignerName?: string;
+    icaCompanySignerTitle?: string;
     hipaaSigned?: boolean;
     w9Signed?: boolean;
     orientationAcknowledged?: boolean;
@@ -230,6 +237,13 @@ export default function Therapists() {
   const [showComplianceModal, setShowComplianceModal] = useState(false);
   const [statusReason, setStatusReason] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showIcaModal, setShowIcaModal] = useState(false);
+  const [icaSignerName, setIcaSignerName] = useState('');
+  const [icaSignerTitle, setIcaSignerTitle] = useState('');
+  const [icaSigning, setIcaSigning] = useState(false);
+  const icaCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [icaDrawing, setIcaDrawing] = useState(false);
+  const [icaHasSigned, setIcaHasSigned] = useState(false);
 
   useEffect(() => {
     fetchTherapists();
@@ -314,6 +328,91 @@ export default function Therapists() {
         console.error('Failed to update supervising status:', error);
         alert(error.response?.data?.message || 'Failed to update supervising status');
       }
+    }
+  };
+
+  useEffect(() => {
+    if (!showIcaModal) return;
+    const timer = setTimeout(() => {
+      const canvas = icaCanvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      canvas.width = canvas.offsetWidth * 2;
+      canvas.height = canvas.offsetHeight * 2;
+      ctx.scale(2, 2);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [showIcaModal]);
+
+  const icaGetPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = icaCanvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+
+  const icaStartDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const ctx = icaCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const pos = icaGetPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    setIcaDrawing(true);
+  };
+
+  const icaDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!icaDrawing) return;
+    e.preventDefault();
+    const ctx = icaCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const pos = icaGetPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    setIcaHasSigned(true);
+  };
+
+  const icaStopDraw = () => setIcaDrawing(false);
+
+  const icaClearSignature = () => {
+    const canvas = icaCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setIcaHasSigned(false);
+  };
+
+  const handleCountersignIca = async () => {
+    if (!selectedTherapist || !icaSignerName.trim() || !icaSignerTitle.trim() || !icaHasSigned) return;
+    setIcaSigning(true);
+    try {
+      const canvas = icaCanvasRef.current!;
+      const signatureDataUrl = canvas.toDataURL('image/png');
+      await adminAPI.countersignIca(selectedTherapist._id, {
+        signerName: icaSignerName.trim(),
+        signerTitle: icaSignerTitle.trim(),
+        signatureDataUrl,
+      });
+      await fetchTherapists();
+      setShowIcaModal(false);
+      setSelectedTherapist(null);
+      setIcaSignerName('');
+      setIcaSignerTitle('');
+      setIcaHasSigned(false);
+      alert('ICA countersigned successfully. Therapist is now fully approved.');
+    } catch (error: any) {
+      console.error('Failed to countersign ICA:', error);
+      alert(error.response?.data?.message || 'Failed to countersign ICA');
+    } finally {
+      setIcaSigning(false);
     }
   };
 
@@ -497,6 +596,13 @@ export default function Therapists() {
                         <span className="text-blue-600 flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded-full border border-blue-200">
                           <AlertCircle className="w-3 h-3" />
                           Stage 3: ICA Required
+                        </span>
+                      ) : therapist.complianceItems?.icaSigned && !therapist.complianceItems?.icaCountersigned ? (
+                        <span className="text-purple-600 flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded-full border border-purple-200 cursor-pointer hover:bg-purple-100"
+                          onClick={() => { setSelectedTherapist(therapist); setShowIcaModal(true); }}
+                        >
+                          <PenTool className="w-3 h-3" />
+                          ICA: Countersign Required
                         </span>
                       ) : (
                         <span className="text-green-600 flex items-center gap-1 text-xs bg-green-50 px-2 py-1 rounded-full border border-green-200">
@@ -1321,6 +1427,133 @@ export default function Therapists() {
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ICA Countersign Modal */}
+      {showIcaModal && selectedTherapist && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-6 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Countersign ICA</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              Therapist: <strong>{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</strong>
+              {selectedTherapist.complianceItems?.icaSignedAt && (
+                <span className="ml-2 text-xs text-gray-500">
+                  (signed {new Date(selectedTherapist.complianceItems.icaSignedAt).toLocaleDateString()})
+                </span>
+              )}
+            </p>
+
+            {selectedTherapist.complianceItems?.icaContractorSignatureUrl && (
+              <div className="mb-5 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-xs font-medium text-gray-600 mb-2">Contractor&apos;s Signature</p>
+                <img
+                  src={getBlobProxyUrl(selectedTherapist.complianceItems.icaContractorSignatureUrl)}
+                  alt="Contractor signature"
+                  className="max-h-20 object-contain"
+                />
+                {selectedTherapist.complianceItems?.icaContractorAddress && (
+                  <p className="text-xs text-gray-500 mt-2">Address: {selectedTherapist.complianceItems.icaContractorAddress}</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Representative Name <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={icaSignerName}
+                  onChange={(e) => setIcaSignerName(e.target.value)}
+                  placeholder="e.g. Jane Smith"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={icaSignerTitle}
+                  onChange={(e) => setIcaSignerTitle(e.target.value)}
+                  placeholder="e.g. CEO, Director of Operations"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Digital Signature <span className="text-red-500">*</span></label>
+                <p className="text-xs text-gray-500 mb-2">Draw your signature below</p>
+                <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                  <canvas
+                    ref={icaCanvasRef}
+                    className="w-full cursor-crosshair touch-none"
+                    style={{ height: '120px' }}
+                    onMouseDown={icaStartDraw}
+                    onMouseMove={icaDraw}
+                    onMouseUp={icaStopDraw}
+                    onMouseLeave={icaStopDraw}
+                    onTouchStart={icaStartDraw}
+                    onTouchMove={icaDraw}
+                    onTouchEnd={icaStopDraw}
+                  />
+                  {!icaHasSigned && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-gray-300 text-lg italic">Sign here</span>
+                    </div>
+                  )}
+                </div>
+                {icaHasSigned && (
+                  <button
+                    type="button"
+                    onClick={icaClearSignature}
+                    className="mt-2 text-sm text-red-600 hover:text-red-800 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Clear
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="text"
+                  value={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  disabled
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-100 text-gray-700"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowIcaModal(false);
+                  setSelectedTherapist(null);
+                  setIcaSignerName('');
+                  setIcaSignerTitle('');
+                  setIcaHasSigned(false);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCountersignIca}
+                disabled={icaSigning || !icaSignerName.trim() || !icaSignerTitle.trim() || !icaHasSigned}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {icaSigning ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <PenTool className="w-4 h-4" />
+                    Countersign ICA
+                  </>
+                )}
               </button>
             </div>
           </div>
