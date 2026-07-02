@@ -1,15 +1,41 @@
-export default function ICAContent() {
+interface ICAContentProps {
+  signedData?: {
+    effectiveDate?: string;
+    contractorName?: string;
+    contractorAddress?: string;
+    contractorSignatureUrl?: string;
+    contractorSignedAt?: string;
+    companySignerName?: string;
+    companySignerTitle?: string;
+    companySignatureUrl?: string;
+    companySignedAt?: string;
+  };
+}
+
+const FilledField = ({ value }: { value?: string }) => (
+  value
+    ? <span className="font-semibold text-black underline decoration-dotted underline-offset-4 px-1">{value}</span>
+    : <span className="inline-block border-b border-gray-400 w-48" />
+);
+
+export default function ICAContent({ signedData }: ICAContentProps = {}) {
+  const s = signedData;
+  const effectiveDate = s?.effectiveDate ? new Date(s.effectiveDate) : null;
+  const dayNum = effectiveDate ? effectiveDate.getDate().toString() : undefined;
+  const monthName = effectiveDate ? effectiveDate.toLocaleDateString('en-US', { month: 'long' }) : undefined;
+  const yearSuffix = effectiveDate ? effectiveDate.getFullYear().toString().slice(2) : undefined;
+
   return (
     <div className="ica-content text-gray-800 text-sm leading-relaxed">
       <h2 className="text-xl font-bold text-black text-center mb-1">INDEPENDENT CONTRACTOR AGREEMENT</h2>
 
       <p className="mb-4">
-        This Independent Contractor Agreement (&quot;Agreement&quot;) is entered into as of the ___________ day
-        of _________________________, 20________ (&quot;Effective Date&quot;), by and between <strong>ROOTED
+        This Independent Contractor Agreement (&quot;Agreement&quot;) is entered into as of the <FilledField value={dayNum} /> day
+        of <FilledField value={monthName} />, 20<FilledField value={yearSuffix} /> (&quot;Effective Date&quot;), by and between <strong>ROOTED
         VOICES SPEECH &amp; LANGUAGE THERAPY, LLC</strong>, a Louisiana Limited Liability Company
         and a telehealth service provider (&quot;Company&quot;), and
-        ______________________________________________________________ (&quot;Contractor&quot;) of
-        _________________________________________________(Address).
+        <FilledField value={s?.contractorName} /> (&quot;Contractor&quot;) of
+        <FilledField value={s?.contractorAddress} />(Address).
       </p>
 
       {/* ARTICLE 1 */}
@@ -383,6 +409,67 @@ export default function ICAContent() {
       <p className="mb-2"><strong>11. Return or Destruction of PHI.</strong> Upon termination, Contractor shall return or securely destroy all PHI.</p>
       <p className="mb-2"><strong>12. Indemnification (HIPAA-Specific).</strong> Contractor shall indemnify Company for any violations of HIPAA caused by Contractor.</p>
       <p className="mb-2"><strong>13. Survival.</strong> These obligations survive termination of the Agreement.</p>
+
+      {/* SIGNATURE BLOCK */}
+      <div className="mt-10 border-t-2 border-black pt-8">
+        <div className="mb-8">
+          <p className="font-bold text-black mb-4">ROOTED VOICES SPEECH &amp; LANGUAGE THERAPY, LLC</p>
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">By:</span>
+              {s?.companySignatureUrl ? (
+                <img src={s.companySignatureUrl} alt="Company signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              ) : (
+                <span className="flex-1 border-b border-gray-400" />
+              )}
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">Name:</span>
+              {s?.companySignerName ? <span className="font-semibold text-black">{s.companySignerName}</span> : <span className="flex-1 border-b border-gray-400" />}
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">Title:</span>
+              {s?.companySignerTitle ? <span className="font-semibold text-black">{s.companySignerTitle}</span> : <span className="flex-1 border-b border-gray-400" />}
+            </div>
+            {s?.companySignedAt && (
+              <div className="flex items-end gap-2">
+                <span className="text-gray-700 w-20 shrink-0">Date:</span>
+                <span className="font-semibold text-black">{new Date(s.companySignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <p className="font-bold text-black mb-4">CONTRACTOR</p>
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">By:</span>
+              {s?.contractorSignatureUrl ? (
+                <img src={s.contractorSignatureUrl} alt="Contractor signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              ) : (
+                <span className="flex-1 border-b border-gray-400" />
+              )}
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">Printed Name:</span>
+              {s?.contractorName ? <span className="font-semibold text-black">{s.contractorName}</span> : <span className="flex-1 border-b border-gray-400" />}
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">Signature:</span>
+              {s?.contractorSignatureUrl ? (
+                <img src={s.contractorSignatureUrl} alt="Contractor signature" className="max-h-12 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              ) : (
+                <span className="flex-1 border-b border-gray-400" />
+              )}
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-gray-700 w-20 shrink-0">Date:</span>
+              {s?.contractorSignedAt ? <span className="font-semibold text-black">{new Date(s.contractorSignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span> : <span className="flex-1 border-b border-gray-400" />}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

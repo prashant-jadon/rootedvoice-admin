@@ -1601,113 +1601,18 @@ export default function Therapists() {
               </div>
             </div>
 
-            {selectedTherapist.complianceItems?.icaEffectiveDate && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-800 font-medium">
-                  Effective Date: {new Date(selectedTherapist.complianceItems.icaEffectiveDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
-            )}
-
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-[50vh] overflow-y-auto mb-6">
-              <ICAContent />
-            </div>
-
-            {/* Signature Block */}
-            <div className="border-t-2 border-gray-300 pt-5">
-              <h4 className="text-base font-bold text-gray-900 mb-4">Signatures</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contractor */}
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contractor</p>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Name</p>
-                      <p className="font-medium text-gray-900">{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Address</p>
-                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaContractorAddress || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Signature</p>
-                      {selectedTherapist.complianceItems?.icaContractorSignatureUrl ? (
-                        <img
-                          src={getBlobProxyUrl(selectedTherapist.complianceItems.icaContractorSignatureUrl)}
-                          alt="Contractor signature"
-                          className="max-h-14 object-contain mt-1 border border-gray-200 rounded bg-white p-1"
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.display = 'none';
-                            const fallback = document.createElement('p');
-                            fallback.className = 'text-xs text-gray-400 italic mt-1';
-                            fallback.textContent = 'Signature on file';
-                            img.parentElement?.appendChild(fallback);
-                          }}
-                        />
-                      ) : (
-                        <p className="text-xs text-gray-400 italic">Signature on file</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Date Signed</p>
-                      <p className="text-sm text-gray-800">
-                        {selectedTherapist.complianceItems?.icaSignedAt
-                          ? new Date(selectedTherapist.complianceItems.icaSignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                          : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Company */}
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Company</p>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Company</p>
-                      <p className="font-medium text-gray-900">Rooted Voices Speech &amp; Language Therapy, LLC</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Representative</p>
-                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaCompanySignerName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Title</p>
-                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaCompanySignerTitle || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Signature</p>
-                      {selectedTherapist.complianceItems?.icaCompanySignatureUrl ? (
-                        <img
-                          src={getBlobProxyUrl(selectedTherapist.complianceItems.icaCompanySignatureUrl)}
-                          alt="Company signature"
-                          className="max-h-14 object-contain mt-1 border border-gray-200 rounded bg-white p-1"
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.display = 'none';
-                            const fallback = document.createElement('p');
-                            fallback.className = 'text-xs text-gray-400 italic mt-1';
-                            fallback.textContent = 'Signature on file';
-                            img.parentElement?.appendChild(fallback);
-                          }}
-                        />
-                      ) : (
-                        <p className="text-xs text-gray-400 italic">Signature on file</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Date Signed</p>
-                      <p className="text-sm text-gray-800">
-                        {selectedTherapist.complianceItems?.icaCountersignedAt
-                          ? new Date(selectedTherapist.complianceItems.icaCountersignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                          : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+              <ICAContent signedData={{
+                effectiveDate: selectedTherapist.complianceItems?.icaEffectiveDate,
+                contractorName: `${selectedTherapist.userId?.firstName || ''} ${selectedTherapist.userId?.lastName || ''}`.trim(),
+                contractorAddress: selectedTherapist.complianceItems?.icaContractorAddress,
+                contractorSignatureUrl: selectedTherapist.complianceItems?.icaContractorSignatureUrl ? getBlobProxyUrl(selectedTherapist.complianceItems.icaContractorSignatureUrl) : undefined,
+                contractorSignedAt: selectedTherapist.complianceItems?.icaSignedAt,
+                companySignerName: selectedTherapist.complianceItems?.icaCompanySignerName,
+                companySignerTitle: selectedTherapist.complianceItems?.icaCompanySignerTitle,
+                companySignatureUrl: selectedTherapist.complianceItems?.icaCompanySignatureUrl ? getBlobProxyUrl(selectedTherapist.complianceItems.icaCompanySignatureUrl) : undefined,
+                companySignedAt: selectedTherapist.complianceItems?.icaCountersignedAt,
+              }} />
             </div>
 
             <div className="mt-5 flex justify-end">
