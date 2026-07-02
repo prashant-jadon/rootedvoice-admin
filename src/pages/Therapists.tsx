@@ -582,7 +582,14 @@ export default function Therapists() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {therapist.onboardingStage === 1 ? (
+                      {therapist.complianceItems?.icaSigned && !therapist.complianceItems?.icaCountersigned ? (
+                        <span className="text-purple-600 flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded-full border border-purple-200 cursor-pointer hover:bg-purple-100"
+                          onClick={() => { setSelectedTherapist(therapist); setShowIcaModal(true); }}
+                        >
+                          <PenTool className="w-3 h-3" />
+                          ICA: Countersign Required
+                        </span>
+                      ) : therapist.onboardingStage === 1 ? (
                         <span className="text-yellow-600 flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded-full border border-yellow-200">
                           <AlertCircle className="w-3 h-3" />
                           Stage 1: Profile
@@ -596,13 +603,6 @@ export default function Therapists() {
                         <span className="text-blue-600 flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded-full border border-blue-200">
                           <AlertCircle className="w-3 h-3" />
                           Stage 3: ICA Required
-                        </span>
-                      ) : therapist.complianceItems?.icaSigned && !therapist.complianceItems?.icaCountersigned ? (
-                        <span className="text-purple-600 flex items-center gap-1 text-xs bg-purple-50 px-2 py-1 rounded-full border border-purple-200 cursor-pointer hover:bg-purple-100"
-                          onClick={() => { setSelectedTherapist(therapist); setShowIcaModal(true); }}
-                        >
-                          <PenTool className="w-3 h-3" />
-                          ICA: Countersign Required
                         </span>
                       ) : (
                         <span className="text-green-600 flex items-center gap-1 text-xs bg-green-50 px-2 py-1 rounded-full border border-green-200">
