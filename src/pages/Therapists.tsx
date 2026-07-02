@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { adminAPI } from '../lib/api';
-import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose, PenTool, Trash2 } from 'lucide-react';
+import { Search, UserCheck, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, Eye, Pause, Play, FileCheck, Check, X, Star, Puzzle, FileText, Download, ZoomIn, XCircle as XClose, PenTool, Trash2, Printer } from 'lucide-react';
+import ICAContent from '../components/ICAContent';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -119,6 +120,8 @@ interface Therapist {
     icaCountersignedAt?: string;
     icaCompanySignerName?: string;
     icaCompanySignerTitle?: string;
+    icaCompanySignatureUrl?: string;
+    icaEffectiveDate?: string;
     hipaaSigned?: boolean;
     w9Signed?: boolean;
     orientationAcknowledged?: boolean;
@@ -244,6 +247,7 @@ export default function Therapists() {
   const icaCanvasRef = useRef<HTMLCanvasElement>(null);
   const [icaDrawing, setIcaDrawing] = useState(false);
   const [icaHasSigned, setIcaHasSigned] = useState(false);
+  const [showViewIcaModal, setShowViewIcaModal] = useState(false);
 
   useEffect(() => {
     fetchTherapists();
@@ -683,6 +687,19 @@ export default function Therapists() {
                         <Eye className="w-4 h-4" />
                         Earnings
                       </a>
+                      {therapist.complianceItems?.icaSigned && therapist.complianceItems?.icaCountersigned && (
+                        <button
+                          onClick={() => {
+                            setSelectedTherapist(therapist);
+                            setShowViewIcaModal(true);
+                          }}
+                          className="px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                          title="View Signed ICA"
+                        >
+                          <FileText className="w-4 h-4" />
+                          ICA
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1550,6 +1567,155 @@ export default function Therapists() {
                     Countersign ICA
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Signed ICA Modal */}
+      {showViewIcaModal && selectedTherapist && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-4 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-md bg-white mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Signed Independent Contractor Agreement</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName} &mdash; Fully Executed
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-1.5 text-sm font-medium transition-colors"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </button>
+                <button
+                  onClick={() => { setShowViewIcaModal(false); setSelectedTherapist(null); }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <XClose className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {selectedTherapist.complianceItems?.icaEffectiveDate && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-800 font-medium">
+                  Effective Date: {new Date(selectedTherapist.complianceItems.icaEffectiveDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+              </div>
+            )}
+
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-h-[50vh] overflow-y-auto mb-6">
+              <ICAContent />
+            </div>
+
+            {/* Signature Block */}
+            <div className="border-t-2 border-gray-300 pt-5">
+              <h4 className="text-base font-bold text-gray-900 mb-4">Signatures</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Contractor */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contractor</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Name</p>
+                      <p className="font-medium text-gray-900">{selectedTherapist.userId?.firstName} {selectedTherapist.userId?.lastName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Address</p>
+                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaContractorAddress || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Signature</p>
+                      {selectedTherapist.complianceItems?.icaContractorSignatureUrl ? (
+                        <img
+                          src={getBlobProxyUrl(selectedTherapist.complianceItems.icaContractorSignatureUrl)}
+                          alt="Contractor signature"
+                          className="max-h-14 object-contain mt-1 border border-gray-200 rounded bg-white p-1"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                            const fallback = document.createElement('p');
+                            fallback.className = 'text-xs text-gray-400 italic mt-1';
+                            fallback.textContent = 'Signature on file';
+                            img.parentElement?.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">Signature on file</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Date Signed</p>
+                      <p className="text-sm text-gray-800">
+                        {selectedTherapist.complianceItems?.icaSignedAt
+                          ? new Date(selectedTherapist.complianceItems.icaSignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Company */}
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Company</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Company</p>
+                      <p className="font-medium text-gray-900">Rooted Voices Speech &amp; Language Therapy, LLC</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Representative</p>
+                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaCompanySignerName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Title</p>
+                      <p className="text-sm text-gray-800">{selectedTherapist.complianceItems?.icaCompanySignerTitle || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Signature</p>
+                      {selectedTherapist.complianceItems?.icaCompanySignatureUrl ? (
+                        <img
+                          src={getBlobProxyUrl(selectedTherapist.complianceItems.icaCompanySignatureUrl)}
+                          alt="Company signature"
+                          className="max-h-14 object-contain mt-1 border border-gray-200 rounded bg-white p-1"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                            const fallback = document.createElement('p');
+                            fallback.className = 'text-xs text-gray-400 italic mt-1';
+                            fallback.textContent = 'Signature on file';
+                            img.parentElement?.appendChild(fallback);
+                          }}
+                        />
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">Signature on file</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Date Signed</p>
+                      <p className="text-sm text-gray-800">
+                        {selectedTherapist.complianceItems?.icaCountersignedAt
+                          ? new Date(selectedTherapist.complianceItems.icaCountersignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => { setShowViewIcaModal(false); setSelectedTherapist(null); }}
+                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              >
+                Close
               </button>
             </div>
           </div>
